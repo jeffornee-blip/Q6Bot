@@ -3,7 +3,9 @@ from nextcord import Interaction
 from core.client import dc
 from core.config import cfg
 
-guild_kwargs = dict(guild_ids=cfg.DC_SLASH_SERVERS) if len(cfg.DC_SLASH_SERVERS) else dict()
+servers = getattr(cfg, "DC_SLASH_SERVERS", [])
+guild_kwargs = dict(guild_ids=servers) if servers else dict()
+
 
 
 @dc.slash_command(name='channel', **guild_kwargs)
