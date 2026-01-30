@@ -59,7 +59,7 @@ async def on_reaction_remove(reaction, user):  # FIXME: this event does not get 
 
 @dc.event
 async def on_ready():
-	await dc.change_presence(activity=Activity(type=ActivityType.watching, name=cfg.STATUS))
+	await dc.change_presence(activity=Activity(type=ActivityType.watching, name=getattr(cfg, "STATUS", "PUBobot")))
 	if not bot.bot_was_ready:  # Connected for the first time, load everything
 		log.info(f"Logged in discord as '{dc.user.name}#{dc.user.discriminator}'.")
 		log.info("Loading queue channels...")
