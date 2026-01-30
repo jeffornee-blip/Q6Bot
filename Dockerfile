@@ -14,6 +14,7 @@ COPY . .
 
 # Create config.cfg from environment variables at runtime
 CMD bash -c "\
+mkdir -p locales/compiled && \
 echo \"# -*- coding: utf-8 -*-\" > config.cfg && \
 echo \"DC_BOT_TOKEN = '${DC_BOT_TOKEN}'\" >> config.cfg && \
 echo \"DC_CLIENT_ID = '${DC_CLIENT_ID}'\" >> config.cfg && \
