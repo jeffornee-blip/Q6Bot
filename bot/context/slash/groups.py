@@ -7,7 +7,6 @@ servers = getattr(cfg, "DC_SLASH_SERVERS", [])
 guild_kwargs = dict(guild_ids=servers) if servers else dict()
 
 
-
 @dc.slash_command(name='channel', **guild_kwargs)
 async def admin_channel(interaction: Interaction):
 	pass

@@ -20,7 +20,7 @@ loop.run_until_complete(database.db.connect())
 import bot
 
 # Load web server
-if config.cfg.WS_ENABLE:
+if getattr(config.cfg, "WS_ENABLE", False):
 	from webui import webserver
 else:
 	webserver = False
@@ -98,7 +98,12 @@ async def think():
 # Login to discord
 loop = asyncio.get_event_loop()
 loop.create_task(think())
-loop.create_task(dc.start(config.cfg.DC_BOT_TOKEN))
+token = getattr(config.cfg, "DC_BOT_TOKEN", None)
+if not token:
+	raise RuntimeError("DC_BOT_TOKEN is not set")
+
+loop.create_task(dc.start(token))
+
 
 log.info("Connecting to discord...")
 loop.run_forever()
