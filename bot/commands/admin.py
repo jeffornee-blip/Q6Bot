@@ -1,7 +1,7 @@
 __all__ = [
 	'noadds', 'noadd', 'forgive', 'rating_seed', 'rating_penality', 'rating_hide',
 	'rating_reset', 'rating_snap', 'stats_reset', 'stats_reset_player', 'stats_replace_player',
-	'phrases_add', 'phrases_clear', 'undo_match'
+	'phrases_add', 'phrases_clear', 'undo_match', 'force_checkin'
 ]
 
 from time import time
@@ -143,3 +143,26 @@ async def undo_match(ctx, match_id: int):
 		await ctx.success(ctx.qc.gt("Done."))
 	else:
 		raise bot.Exc.NotFoundError(ctx.qc.gt("Could not find match with specified id."))
+
+
+async def force_checkin(ctx):
+	""" Force all players in check-in stage to check in """
+	ctx.check_perms(ctx.Perms.ADMIN)
+	
+	# Find the active match in this channel that is in check-in stage
+	match = None
+	for m in bot.active_matches:
+		if m.qc == ctx.qc and m.state == m.CHECK_IN:
+			match = m
+			break
+	
+	if not match:
+		raise bot.Exc.NotFoundError(ctx.qc.gt("No match in check-in stage found."))
+	
+	# Force all players to check in
+	for player in match.players:
+		match.check_in.ready_players.add(player)
+	
+	# Refresh the check-in, which will auto-finish if all are ready
+	await match.check_in.refresh(ctx)
+	await ctx.success(ctx.qc.gt("All players have been forced to check in."))

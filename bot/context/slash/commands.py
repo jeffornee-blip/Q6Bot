@@ -319,6 +319,12 @@ _put.on_autocomplete('team_name')(autocomplete.teams_by_match_id)
 _put.on_autocomplete('match_id')(autocomplete.match_ids)
 
 
+@groups.admin_match.subcommand(name='force_checkin', description='Force all players in check-in stage to check in.')
+async def _force_checkin(
+		interaction: Interaction
+): await run_slash(bot.commands.force_checkin, interaction=interaction)
+
+
 # noadds -> ...
 
 @groups.admin_noadds.subcommand(name='list', description='Show noadds list.')
