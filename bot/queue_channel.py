@@ -299,17 +299,18 @@ class QueueChannel:
 					Variables.IntVar("rating", default=1200, description="The rank will be given on this rating or higher."),
 					Variables.RoleVar("role", description="Assign a guild role to the rank owners.")
 				],
-				default=[
-					dict(rank="〈G〉", rating=0, role=None),
-					dict(rank="〈F〉", rating=1000, role=None),
-					dict(rank="〈E〉", rating=1200, role=None),
-					dict(rank="〈D〉", rating=1400, role=None),
-					dict(rank="〈C〉", rating=1600, role=None),
-					dict(rank="〈B〉", rating=1800, role=None),
-					dict(rank="〈A〉", rating=1900, role=None),
-					dict(rank="〈★〉", rating=2000, role=None)
-				],
-				blank=dict(rank="〈G〉", rating=0, role=None)
+				   default=[
+					   dict(rank="🐐", rating=0, role=None),  # CHAD
+					   dict(rank="<:WOOD:1471609879142600748>", rating=800, role=None),
+					   dict(rank="<:LEAD:1471609859500675082>", rating=1000, role=None),
+					   dict(rank="<:BRNZ:1471609838504251525>", rating=1200, role=None),
+					   dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None),
+					   dict(rank="<:GOLD:1471609800042221742>", rating=1600, role=None),
+					   dict(rank="<:DIAM:1471609760104058880>", rating=1800, role=None),
+					   dict(rank="<:CHMP:1471609732853665834>", rating=2000, role=None),
+					   dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)
+				   ],
+				   blank=dict(rank="🐐", rating=0, role=None)
 			)
 		]
 	)
