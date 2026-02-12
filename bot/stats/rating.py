@@ -366,11 +366,24 @@ class Quidditch6v6Rating(BaseRating):
 		
 		return multiplier
 
-	def _get_streak_multiplier(self, streak):
-		"""Get streak multiplier based on consecutive wins/losses"""
+	def _get_streak_multiplier(self, streak, is_win):
+		"""Get streak multiplier based on consecutive wins/losses
+		
+		Only applies multiplier if the outcome continues the streak.
+		If streak is broken (e.g., win on losing streak), no multiplier.
+		"""
 		if streak is None:
 			return 1.0
 		
+		# Only apply multiplier if outcome continues the streak direction
+		if streak > 0 and not is_win:  # Winning streak broken by a loss
+			return 1.0
+		if streak < 0 and is_win:  # Losing streak broken by a win
+			return 1.0
+		if streak == 0:  # No active streak
+			return 1.0
+		
+		# Streak continues - apply multiplier
 		abs_streak = abs(streak)
 		
 		if abs_streak >= 5:
@@ -426,7 +439,7 @@ class Quidditch6v6Rating(BaseRating):
 			
 			team_diff_mult = self._get_team_differential_multiplier(winner_avg, loser_avg, is_winner=True)
 			
-			streak_mult = self._get_streak_multiplier(p.get('streak', 0))
+			streak_mult = self._get_streak_multiplier(p.get('streak', 0), is_win=True)
 			
 			# Final rating change
 			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult * streak_mult
@@ -457,7 +470,7 @@ class Quidditch6v6Rating(BaseRating):
 			
 			team_diff_mult = self._get_team_differential_multiplier(loser_avg, winner_avg, is_winner=False)
 			
-			streak_mult = self._get_streak_multiplier(p.get('streak', 0))
+			streak_mult = self._get_streak_multiplier(p.get('streak', 0), is_win=False)
 			
 			# Final rating change
 			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult * streak_mult
