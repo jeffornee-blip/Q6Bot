@@ -1,12 +1,12 @@
 __all__ = [
 	'add', 'remove', 'who', 'add_player', 'remove_player', 'promote', 'start', 'split',
-	'reset', 'subscribe', 'server', 'maps'
+	'reset', 'subscribe', 'server', 'maps', 'force_add', 'force_remove'
 ]
 
 import time
 from random import choice
 from nextcord import Member
-from core.utils import error_embed, join_and, find, seconds_to_str
+from core.utils import error_embed, join_and, find, seconds_to_str, get_nick
 import bot
 
 
@@ -231,3 +231,80 @@ async def maps(ctx, queue: str, one: bool = False):
 			", ".join((f"`{i['name']}`" for i in q.cfg.maps)),
 			title=ctx.qc.gt("Maps for **{queue}**").format(queue=q.name)
 		)
+
+
+async def force_add(ctx, queue: str, *players: Member):
+	""" Force add up to 10 players to a queue """
+	ctx.check_perms(ctx.Perms.ADMIN)
+	
+	if (q := find(lambda i: i.name.lower() == queue.lower(), ctx.qc.queues)) is None:
+		raise bot.Exc.SyntaxError(f"Queue '{queue}' not found on the channel.")
+	
+	if not players:
+		raise bot.Exc.SyntaxError(ctx.qc.gt("You must specify at least one player to add."))
+	
+	if len(players) > 10:
+		raise bot.Exc.ValueError(ctx.qc.gt("You can add a maximum of 10 players at a time."))
+	
+	added = []
+	failed = []
+	
+	for player in players:
+		p = await ctx.get_member(player)
+		if p is None:
+			failed.append(get_nick(player))
+			continue
+		
+		resp = await q.add_member(ctx, p)
+		if resp == bot.Qr.Success:
+			await ctx.qc.update_expire(p)
+			added.append(get_nick(p))
+		elif resp == bot.Qr.QueueStarted:
+			added.append(get_nick(p))
+		elif resp == bot.Qr.Duplicate:
+			failed.append(f"{get_nick(p)} (already in queue)")
+		elif resp == bot.Qr.QueueFull:
+			failed.append(f"{get_nick(p)} (queue full)")
+		elif resp == bot.Qr.NotAllowed:
+			failed.append(f"{get_nick(p)} (not allowed)")
+	
+	msg = ""
+	if added:
+		msg += f"**Added:** {', '.join(added)}\n"
+	if failed:
+		msg += f"**Failed:** {', '.join(failed)}"
+	
+	if msg:
+		await ctx.reply(msg)
+	await ctx.notice(ctx.qc.topic)
+
+
+async def force_remove(ctx, player: Member, queues: str = None):
+	""" Force remove a player from queues """
+	ctx.check_perms(ctx.Perms.ADMIN)
+	
+	if (p := await ctx.get_member(player)) is None:
+		raise bot.Exc.SyntaxError(ctx.qc.gt("Specified user not found."))
+	
+	targets = queues.lower().split(" ") if queues else []
+	
+	if not len(targets):
+		t_queues = [q for q in ctx.qc.queues if q.is_added(p)]
+	else:
+		t_queues = [
+			q for q in ctx.qc.queues if
+			any((t == q.name.lower() or t in (a["alias"].lower() for a in q.cfg.aliases) for t in targets)) and
+			q.is_added(p)
+		]
+	
+	if len(t_queues):
+		for q in t_queues:
+			q.pop_members(p)
+		
+		if not any((q.is_added(p) for q in ctx.qc.queues)):
+			bot.expire.cancel(ctx.qc, p)
+		
+		await ctx.success(ctx.qc.gt("Removed **{member}** from queues.").format(member=get_nick(p)))
+		await ctx.notice(ctx.qc.topic)
+	else:
+		await ctx.error(ctx.qc.gt("Player not found in specified queues."))

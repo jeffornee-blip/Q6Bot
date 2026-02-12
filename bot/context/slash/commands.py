@@ -138,6 +138,34 @@ async def _remove_player(
 ): await run_slash(bot.commands.remove_player, interaction=interaction, player=player, queues=queues)
 
 
+@groups.admin_queue.subcommand(name='force_add', description='Force add up to 10 players to a queue.')
+async def _force_add(
+	interaction: Interaction,
+	queue: str = SlashOption(name="queue", description="Queue to add players to."),
+	player1: Member = SlashOption(name="player1", description="Player to add", verify=False),
+	player2: Member = SlashOption(name="player2", description="Player to add", required=False, verify=False),
+	player3: Member = SlashOption(name="player3", description="Player to add", required=False, verify=False),
+	player4: Member = SlashOption(name="player4", description="Player to add", required=False, verify=False),
+	player5: Member = SlashOption(name="player5", description="Player to add", required=False, verify=False),
+	player6: Member = SlashOption(name="player6", description="Player to add", required=False, verify=False),
+	player7: Member = SlashOption(name="player7", description="Player to add", required=False, verify=False),
+	player8: Member = SlashOption(name="player8", description="Player to add", required=False, verify=False),
+	player9: Member = SlashOption(name="player9", description="Player to add", required=False, verify=False),
+	player10: Member = SlashOption(name="player10", description="Player to add", required=False, verify=False)
+):
+	players = tuple(p for p in [player1, player2, player3, player4, player5, player6, player7, player8, player9, player10] if p)
+	await run_slash(bot.commands.force_add, interaction=interaction, queue=queue, players=players)
+_force_add.on_autocomplete("queue")(autocomplete.queues)
+
+
+@groups.admin_queue.subcommand(name='force_remove', description='Force remove a player from queues.')
+async def _force_remove(
+	interaction: Interaction,
+	player: Member = SlashOption(name="player", description="Member to remove from the queues", verify=False),
+	queues: str = SlashOption(name="queues", description="Queues to remove the player from.", required=False)
+): await run_slash(bot.commands.force_remove, interaction=interaction, player=player, queues=queues)
+
+
 @groups.admin_queue.subcommand(name='clear', description='Remove players from the queues.')
 async def _reset(
 		interaction: Interaction,
