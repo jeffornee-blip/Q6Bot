@@ -154,7 +154,11 @@ loop.create_task(think())
 loop.create_task(dc.start(config.cfg.DC_BOT_TOKEN))
 
 # At the end of startup, force update all rating roles
-loop.create_task(bot.force_update.force_update_all_rating_roles())
+# This must be run after the bot is ready and guilds are loaded
+async def force_update_after_ready():
+    await dc.wait_until_ready()
+    await bot.force_update.force_update_all_rating_roles()
+loop.create_task(force_update_after_ready())
 
 log.info("Connecting to discord...")
 loop.run_forever()
