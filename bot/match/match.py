@@ -8,6 +8,7 @@ import bot
 from core.utils import find, get, iter_to_dict, join_and, get_nick
 from core.console import log
 from core.client import dc
+from core.database import db
 
 from .check_in import CheckIn
 from .draft import Draft
@@ -64,7 +65,22 @@ class Match:
 		match = cls(match_id, queue, ctx.qc, players, ratings, **kwargs)
 		# Prepare the Match object
 		match.maps = match.random_maps(match.cfg['maps'], match.cfg['map_count'], queue.last_maps)
-		match.init_captains(match.cfg['pick_captains'], match.cfg['captains_role_id'])
+		
+		# Get recent captains for smart captain selection (last 10 matches)
+		recent_captains = set()
+		if match.cfg['pick_captains'] == "smart":
+			try:
+				recent_matches = await db.select(
+					('user_id',), 'qc_player_matches',
+					where={'channel_id': ctx.qc.id},
+					order_by='match_id DESC',
+					limit=60  # Check last ~6 matches (10 players per match)
+				)
+				recent_captains = {m['user_id'] for m in recent_matches[:20]}  # Top 20 most recent
+			except:
+				pass  # If query fails, continue without recent captains history
+		
+		match.init_captains(match.cfg['pick_captains'], match.cfg['captains_role_id'], recent_captains)
 		match.init_teams(match.cfg['pick_teams'])
 		if match.ranked:
 			match.states.append(match.WAITING_REPORT)
@@ -194,7 +210,69 @@ class Match:
 			reverse=True
 		)
 
-	def init_captains(self, pick_captains, captains_role_id):
+	def _get_quidditch_role(self, member):
+		"""Get Quidditch position from member's roles"""
+		role_names = [r.name.lower() for r in member.roles]
+		for role in ['keeper', 'seeker', 'beater', 'chaser']:
+			if role in role_names:
+				return role
+		return 'chaser'  # Default
+
+	def _has_captain_role(self, member):
+		"""Check if member has captain role"""
+		return self.cfg['captains_role_id'] in [r.id for r in member.roles]
+
+	def _score_captain_pair(self, p1, p2, recent_captains):
+		"""Score a potential captain pair (higher is better)
+		
+		Priorities:
+		1. Both have @captain role (+1000)
+		2. Similar MMR (closer = higher score, max +500)
+		3. Share Quidditch role (+200)
+		4. Deprioritize recent captains (-100 each)
+		"""
+		score = 0
+		
+		# Priority 1: Both have captain role
+		if self._has_captain_role(p1) and self._has_captain_role(p2):
+			score += 1000
+		
+		# Priority 2: Similar MMR (same team should be balanced)
+		mmr_diff = abs(self.ratings[p1.id] - self.ratings[p2.id])
+		mmr_similarity = max(0, 500 - (mmr_diff / 10))  # Penalize large differences
+		score += mmr_similarity
+		
+		# Priority 3: Share Quidditch role
+		if self._get_quidditch_role(p1) == self._get_quidditch_role(p2):
+			score += 200
+		
+		# Priority 4: Deprioritize recent captains
+		if p1.id in recent_captains:
+			score -= 100
+		if p2.id in recent_captains:
+			score -= 100
+		
+		return score
+
+	def _select_captains_smart(self, recent_captains=None):
+		"""Select best captain pair based on priority criteria"""
+		if recent_captains is None:
+			recent_captains = set()
+		
+		best_pair = None
+		best_score = float('-inf')
+		
+		# Score all possible pairs
+		for i, p1 in enumerate(self.players):
+			for p2 in self.players[i+1:]:
+				score = self._score_captain_pair(p1, p2, recent_captains)
+				if score > best_score:
+					best_score = score
+					best_pair = (p1, p2)
+		
+		return list(best_pair) if best_pair else self.sort_players(self.players)[:2]
+
+	def init_captains(self, pick_captains, captains_role_id, recent_captains=None):
 		if pick_captains == "by role and rating":
 			self.captains = self.sort_players(self.players)[:2]
 		elif pick_captains == "fair pairs":
@@ -208,6 +286,10 @@ class Match:
 			self.captains = sorted(
 				rand, key=lambda p: self.cfg['captains_role_id'] in [role.id for role in p.roles], reverse=True
 			)[:2]
+		elif pick_captains == "smart":
+			self.captains = self._select_captains_smart(recent_captains or set())
+		else:
+			self.captains = self.sort_players(self.players)[:2]
 
 	def init_teams(self, pick_teams):
 		if pick_teams == "draft":
