@@ -1,25 +1,34 @@
 #!/bin/bash
-# Compile translation files
+set -e  # Exit on error
+
+echo "=========================================="
 echo "Compiling translation files..."
+echo "=========================================="
 cd locales
 
 # Check if we have the tools available
 if ! command -v msgfmt &> /dev/null; then
-    echo "Warning: msgfmt not found, installing gettext..."
-    apt-get update && apt-get install -y gettext || echo "Could not install gettext"
+    echo "[WARNING] msgfmt not found, installing gettext..."
+    if apt-get update && apt-get install -y gettext; then
+        echo "[SUCCESS] gettext installed"
+    else
+        echo "[WARNING] Could not install gettext, translations will be skipped"
+    fi
 else
-    # Compile translations
+    echo "[INFO] msgfmt found, compiling translations..."
     for i in *.po; do
         folder="compiled/${i%%.*}/LC_MESSAGES/"
         mkdir -p "$folder"
         msgfmt "$i" -o "$folder/all.mo"
-        echo "Compiled: $i"
+        echo "[OK] Compiled: $i"
     done
-    echo "Translation compilation complete!"
+    echo "[SUCCESS] Translation compilation complete!"
 fi
 
 cd ..
 
-# Start the bot
-echo "Starting bot..."
-python PUBobot2.py
+echo ""
+echo "=========================================="
+echo "Starting Q6Bot..."
+echo "=========================================="
+exec python PUBobot2.py

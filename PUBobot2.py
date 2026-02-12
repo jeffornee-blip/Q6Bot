@@ -6,28 +6,81 @@ import signal
 import asyncio
 import traceback
 import queue
+import sys
+import os
 from asyncio import sleep as asleep
 from asyncio import iscoroutine
 
-# Load bot core
-from core import config, console, database, locales, cfg_factory
-from core.client import dc
+print("=" * 60)
+print("PUBobot2 Starting...")
+print("=" * 60)
 
+# Check environment variables before loading anything
+print("\n[STARTUP] Checking environment variables...")
+required_vars = ['DC_BOT_TOKEN', 'DATABASE_URL']
+missing_vars = []
+for var in required_vars:
+	if os.getenv(var):
+		print(f"✓ {var} is set")
+	else:
+		print(f"✗ {var} is NOT set")
+		missing_vars.append(var)
+
+if missing_vars:
+	print(f"\n[ERROR] Missing required environment variables: {', '.join(missing_vars)}")
+	print("Cannot start bot without these variables!")
+	sys.exit(1)
+
+print("\n[STARTUP] Loading bot core modules...")
+try:
+	# Load bot core
+	from core import config, console, database, locales, cfg_factory
+	from core.client import dc
+	print("[STARTUP] ✓ Core modules loaded")
+except Exception as e:
+	print(f"[ERROR] Failed to load core modules: {e}")
+	traceback.print_exc()
+	sys.exit(1)
+
+print("[STARTUP] Connecting to database...")
 loop = asyncio.get_event_loop()
-loop.run_until_complete(database.db.connect())
+try:
+	loop.run_until_complete(database.db.connect())
+	print("[STARTUP] ✓ Database connected")
+except Exception as e:
+	print(f"[ERROR] Failed to connect to database: {e}")
+	print(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}")
+	traceback.print_exc()
+	sys.exit(1)
 
-# Load bot
-import bot
+print("[STARTUP] Loading bot...")
+try:
+	# Load bot
+	import bot
+	print("[STARTUP] ✓ Bot loaded")
+except Exception as e:
+	print(f"[ERROR] Failed to load bot: {e}")
+	traceback.print_exc()
+	sys.exit(1)
 
 # Load web server
+print("[STARTUP] Checking web server configuration...")
 if config.cfg.WS_ENABLE:
-	from webui import webserver
+	print("[STARTUP] Web server enabled, loading...")
+	try:
+		from webui import webserver
+		print("[STARTUP] ✓ Web server loaded")
+	except Exception as e:
+		print(f"[WARNING] Failed to load web server: {e}")
+		webserver = False
 else:
+	print("[STARTUP] Web server disabled")
 	webserver = False
 
 log = console.log
-
-# Gracefully exit on ctrl+c
+log.info("=" * 60)
+log.info("PUBobot2 Started Successfully")
+log.info("=" * 60)
 original_SIGINT_handler = signal.getsignal(signal.SIGINT)
 
 
