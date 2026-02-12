@@ -157,7 +157,7 @@ async def rank(ctx, player: Member = None):
 				value="\n".join(("\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
 					ago=seconds_to_str(int(time() - c['at'])),
 					reason=c['reason'],
-					match_id=f"(__{c['match_id']}__)" if c['match_id'] else "",
+					match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
 					change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
 				) for c in changes))
 			)

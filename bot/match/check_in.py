@@ -45,7 +45,7 @@ class CheckIn:
 				await self.finish(ctx)
 
 	async def start(self, ctx):
-		text = f"!spawn message {self.m.id}"
+		text = f"!spawn message {self.m.id:06d}"
 		self.message = await ctx.channel.send(text)
 
 		emojis = [self.READY_EMOJI, '🔸', self.NOT_READY_EMOJI] if self.allow_discard else [self.READY_EMOJI]

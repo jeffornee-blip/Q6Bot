@@ -20,7 +20,7 @@ async def on_think(frame_time):
 		except Exception as e:
 			log.error("\n".join([
 				f"Error at Match.think().",
-				f"match_id: {match.id}).",
+				f"match_id: {match.id:06d}).",
 				f"{str(e)}. Traceback:\n{traceback.format_exc()}=========="
 			]))
 			bot.active_matches.remove(match)
