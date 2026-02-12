@@ -233,7 +233,7 @@ async def maps(ctx, queue: str, one: bool = False):
 		)
 
 
-async def force_add(ctx, queue: str, *players: Member):
+async def force_add(ctx, queue: str, players):
 	""" Force add up to 10 players to a queue """
 	ctx.check_perms(ctx.Perms.ADMIN)
 	
