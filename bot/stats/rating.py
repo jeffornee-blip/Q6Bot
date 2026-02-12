@@ -366,6 +366,22 @@ class Quidditch6v6Rating(BaseRating):
 		
 		return multiplier
 
+	def _get_streak_multiplier(self, streak):
+		"""Get streak multiplier based on consecutive wins/losses"""
+		if streak is None:
+			return 1.0
+		
+		abs_streak = abs(streak)
+		
+		if abs_streak >= 5:
+			return 1.3
+		elif abs_streak >= 4:
+			return 1.2
+		elif abs_streak >= 3:
+			return 1.1
+		else:
+			return 1.0
+
 	def _calculate_expected_score(self, player_rating, opponent_avg_rating):
 		"""Calculate expected win probability using Elo formula"""
 		return 1 / (1 + 10 ** ((opponent_avg_rating - player_rating) / 400))
@@ -410,8 +426,10 @@ class Quidditch6v6Rating(BaseRating):
 			
 			team_diff_mult = self._get_team_differential_multiplier(winner_avg, loser_avg, is_winner=True)
 			
+			streak_mult = self._get_streak_multiplier(p.get('streak', 0))
+			
 			# Final rating change
-			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult
+			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult * streak_mult
 			
 			# Apply minimum gain
 			r_change = max(self.MIN_GAIN, r_change)
@@ -439,8 +457,10 @@ class Quidditch6v6Rating(BaseRating):
 			
 			team_diff_mult = self._get_team_differential_multiplier(loser_avg, winner_avg, is_winner=False)
 			
+			streak_mult = self._get_streak_multiplier(p.get('streak', 0))
+			
 			# Final rating change
-			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult
+			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult * streak_mult
 			
 			# Apply minimum loss (more negative)
 			r_change = min(-self.MIN_LOSS, r_change)
