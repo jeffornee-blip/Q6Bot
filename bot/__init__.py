@@ -14,6 +14,7 @@ from .stats.noadds import noadds
 from .exceptions import Exceptions as Exc
 from .context import Context, SlashContext, SystemContext
 from . import commands
+from . import force_update
 
 from . import events
 from . import utils
