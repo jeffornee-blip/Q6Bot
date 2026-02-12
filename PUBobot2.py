@@ -153,5 +153,8 @@ loop = asyncio.get_event_loop()
 loop.create_task(think())
 loop.create_task(dc.start(config.cfg.DC_BOT_TOKEN))
 
+# At the end of startup, force update all rating roles
+loop.create_task(bot.force_update.force_update_all_rating_roles())
+
 log.info("Connecting to discord...")
 loop.run_forever()
