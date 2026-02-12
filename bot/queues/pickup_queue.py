@@ -418,7 +418,7 @@ class PickupQueue:
 			raise bot.Exc.PubobotException(self.qc.gt("Not enough players to start the queue."))
 
 		players = list(self.queue)
-		dm_text = self.cfg.start_direct_msg or self.qc.gt("**{queue}** pickup has started @ {channel}!")
+		dm_text = self.cfg.start_direct_msg or self.qc.gt("Your {queue} Match is Starting. Check in now @ {channel}")
 		await self.qc.queue_started(
 			ctx,
 			members=players,
@@ -447,7 +447,7 @@ class PickupQueue:
 
 		groups = [self.queue[i-group_size:i] for i in range(group_size, len(self.queue)+1, group_size)]
 		for group in groups:
-			dm_text = self.cfg.start_direct_msg or self.qc.gt("**{queue}** pickup has started @ {channel}!")
+			dm_text = self.cfg.start_direct_msg or self.qc.gt("Your {queue} Match is Starting. Check in now @ {channel}")
 			await self.qc.queue_started(
 				ctx,
 				members=group,
