@@ -75,11 +75,7 @@ class Log:
 		
 
 def user_input():
-	readline.parse_and_bind("tab: complete")
-	while 1:
-		input_cmd = input('>')
-		user_input_queue.put(input_cmd)
-
+    return
 
 def terminate():
 	global alive
