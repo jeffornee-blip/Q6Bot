@@ -15,12 +15,9 @@ class Embeds:
 			# icon_url="https://cdn.discordapp.com/avatars/240843400457355264/a51a5bf3b34d94922fd60751ba1d60ab.png?size=64"
 		)
 
-	def _ranked_nick(self, p: Member):
-		if self.m.ranked:
-			if self.m.qc.cfg.emoji_ranks:
-				return f'{self.m.rank_str(p)}`{get_nick(p)}`'
-			return f'`{self.m.rank_str(p)}{get_nick(p)}`'
-		return f'`{get_nick(p)}`'
+	       def _ranked_nick(self, p: Member):
+		       # Always use emoji rank, never fallback to (D) or text
+		       return f'{self.m.rank_str(p)}`{get_nick(p)}`'
 
 	def _ranked_mention(self, p: Member):
 		if self.m.ranked:
@@ -78,11 +75,11 @@ class Embeds:
 				queue=self.m.queue.name[0].upper()+self.m.queue.name[1:]
 			)
 		)
-		teams_names = [
-			f"{t.emoji} {t.name.capitalize()} {t.emoji}" +
-			(f" `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
-			for t in self.m.teams[:2]
-		]
+		       teams_names = [
+			       f"{t.name.capitalize()} {t.emoji}" +
+			       (f" `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
+			       for t in self.m.teams[:2]
+		       ]
 		team_players = [
 			" \u200b ".join([
 				self._ranked_nick(p) for p in t
