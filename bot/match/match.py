@@ -22,13 +22,25 @@ class Match:
 	DRAFT = 2
 	WAITING_REPORT = 3
 
-	TEAM_EMOJIS = [
-		":fox:", ":wolf:", ":dog:", ":bear:", ":panda_face:", ":tiger:", ":lion:", ":pig:", ":octopus:", ":boar:",
-		":scorpion:", ":crab:", ":eagle:", ":shark:", ":bat:", ":rhino:", ":dragon_face:", ":deer:"
+
+	HOUSE_NAMES = [
+		'GRYFFINDOR',
+		'HUFFLEPUFF',
+		'RAVENCLAW',
+		'SLYTHERIN'
+	]
+	HOUSE_EMOJIS = [
+		'<:GRYFFINDOR:1471614846817800376>',
+		'<:HUFFLEPUFF:1471614859543187528>',
+		'<:RAVENCLAW:1471614832951165031>',
+		'<:SLYTHERIN:1471614819323875358>'
 	]
 
 	default_cfg = dict(
-		teams=None, team_names=['Alpha', 'Beta'], team_emojis=None, ranked=False,
+		teams=None,
+		team_names=HOUSE_NAMES[:2],
+		team_emojis=HOUSE_EMOJIS[:2],
+		ranked=False,
 		team_size=1, pick_captains="no captains", captains_role_id=None, pick_teams="draft",
 		pick_order=None, maps=[], vote_maps=0, map_count=0, check_in_timeout=0,
 		check_in_discard=True, check_in_discard_immediately=True, match_lifetime=3*60*60, start_msg=None, server=None,
@@ -173,11 +185,13 @@ class Match:
 		self.winner = None
 		self.scores = [0, 0]
 
-		team_names = self.cfg['team_names']
-		team_emojis = self.cfg['team_emojis'] or random.sample(self.TEAM_EMOJIS, 2)
+
+		# Always use Harry Potter house names and emojis for teams
+		team_names = self.HOUSE_NAMES[:2]
+		team_emojis = self.HOUSE_EMOJIS[:2]
 		self.teams = [
-			self.Team(name=team_names[0], emoji=team_emojis[0], idx=0),
-			self.Team(name=team_names[1], emoji=team_emojis[1], idx=1),
+			self.Team(name=f"{team_emojis[0]} {team_names[0]}", emoji=team_emojis[0], idx=0),
+			self.Team(name=f"{team_emojis[1]} {team_names[1]}", emoji=team_emojis[1], idx=1),
 			self.Team(name="unpicked", emoji="📋", idx=-1)
 		]
 
