@@ -79,11 +79,11 @@ class Embeds:
 			)
 		)
 
-		teams_names = [
-			f"{t.emoji} \u200b **{t.name}**" +
-			(f" \u200b `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
-			for t in self.m.teams[:2]
-		]
+			   teams_names = [
+				   f"{t.emoji} {t.name.capitalize()} {t.emoji}" +
+				   (f" `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
+				   for t in self.m.teams[:2]
+			   ]
 		team_players = [
 			" \u200b ".join([
 				self._ranked_nick(p) for p in t
