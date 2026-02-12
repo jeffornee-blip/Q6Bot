@@ -38,29 +38,28 @@ async def last_game(ctx, queue: str = None, player: Member = None, match_id: int
 			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id), order_by="match_id", limit=1
 		)
 
-	if not lg:
-		raise bot.Exc.NotFoundError(ctx.qc.gt("Nothing found"))
-
 	players = await db.select(
-		['user_id', 'nick', 'team'], "qc_player_matches",
-		where=dict(match_id=lg['match_id'])
-	)
-	embed = Embed(colour=Colour(0x50e3c2))
-	embed.add_field(name=lg['queue_name'], value=seconds_to_str(int(time()) - lg['at']) + " ago")
-	if len(team := [p['nick'] for p in players if p['team'] == 0]):
-		embed.add_field(name=lg['alpha_name'], value="`" + ", ".join(team) + "`")
-	if len(team := [p['nick'] for p in players if p['team'] == 1]):
-		embed.add_field(name=lg['beta_name'], value="`" + ", ".join(team) + "`")
-	if len(team := [p['nick'] for p in players if p['team'] is None]):
-		embed.add_field(name=ctx.qc.gt("Players"), value="`" + ", ".join(team) + "`")
-	if lg['ranked']:
-		if lg['winner'] is None:
-			winner = ctx.qc.gt('Draw')
-		else:
-			winner = [lg['alpha_name'], lg['beta_name']][lg['winner']]
-		embed.add_field(name=ctx.qc.gt("Winner"), value=winner)
-	await ctx.reply(embed=embed)
-
+	if match_id:
+		lg = await db.select_one(
+			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, match_id=match_id), order_by="match_id", limit=1
+		)
+	elif queue:
+		if queue := find(lambda q: q.name.lower() == queue.lower(), ctx.qc.queues):
+			lg = await db.select_one(
+				['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, queue_id=queue.id), order_by="match_id", limit=1
+			)
+	elif player and (member := await ctx.get_member(player)) is not None:
+		if match := await db.select_one(
+			['match_id'], "qc_player_matches", where=dict(channel_id=ctx.qc.id, user_id=member.id),
+			order_by="match_id", limit=1
+		):
+			lg = await db.select_one(
+				['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, match_id=match['match_id'])
+			)
+	else:
+		lg = await db.select_one(
+			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id), order_by="match_id", limit=1
+		)
 
 async def stats(ctx, player: Member = None):
 	if player:
