@@ -1,1 +1,1 @@
-web: python PUBobot2.py
+web: bash start.sh
