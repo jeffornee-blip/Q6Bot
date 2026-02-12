@@ -166,6 +166,7 @@ class Match:
 		]
 
 		self.captains = []
+		self.draft_positions = {}  # {user_id: draft_position (0-indexed)}
 		self.states = []
 		self.maps = []
 		self.lifetime = self.cfg['match_lifetime']

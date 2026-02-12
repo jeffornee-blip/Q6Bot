@@ -11,7 +11,7 @@ from core.utils import join_and, seconds_to_str, get_nick
 from core.database import db
 
 import bot
-from bot.stats.rating import FlatRating, Glicko2Rating, TrueSkillRating
+from bot.stats.rating import FlatRating, Glicko2Rating, TrueSkillRating, Quidditch6v6Rating
 
 MAX_EXPIRE_TIME = 12*60*60
 MAX_PROMOTION_DELAY = 12*60*60
@@ -28,7 +28,8 @@ class QueueChannel:
 	rating_names = {
 		'flat': FlatRating,
 		'Glicko2': Glicko2Rating,
-		'TrueSkill': TrueSkillRating
+		'TrueSkill': TrueSkillRating,
+		'Quidditch6v6': Quidditch6v6Rating
 	}
 
 	cfg_factory = CfgFactory(

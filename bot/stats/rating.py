@@ -219,7 +219,7 @@ class FlatRating(BaseRating):
 	def _scale_draw(self, r_change):
 		return 10 * self.draw_bonus
 
-	def rate(self, winners, losers, draw=False):
+	def rate(self, winners, losers, draw=False, winner_meta=None, loser_meta=None):
 		r1, r2 = [], []
 		if not draw:
 			for p in winners:
@@ -241,7 +241,7 @@ class Glicko2Rating(BaseRating):
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
 
-	def rate(self, winners, losers, draw=False):
+	def rate(self, winners, losers, draw=False, winner_meta=None, loser_meta=None):
 		score_w = 0.5 if draw else 1
 		score_l = 0.5 if draw else 0
 		r1, r2 = [], []
@@ -286,7 +286,7 @@ class TrueSkillRating(BaseRating):
 			beta=int(self.init_deviation/2), tau=int(self.init_deviation/100)
 		)
 
-	def rate(self, winners, losers, draw=False):
+	def rate(self, winners, losers, draw=False, winner_meta=None, loser_meta=None):
 		g1 = [self.ts.create_rating(mu=p['rating'], sigma=p['deviation']) for p in winners]
 		g2 = [self.ts.create_rating(mu=p['rating'], sigma=p['deviation']) for p in losers]
 		r1, r2 = [], []
@@ -304,4 +304,148 @@ class TrueSkillRating(BaseRating):
 			new = self._scale_changes(p, res.mu - p['rating'], res.sigma - p['deviation'], 0 if draw else -1)
 			r2.append(new)
 
+		return [r1, r2]
+
+
+class Quidditch6v6Rating(BaseRating):
+	"""
+	Competitive Quidditch 6v6 rating system with role, draft position, and captain weighting.
+	Roles: Keeper, Seeker, Beater (1.15x) vs Chaser (1.0x)
+	Draft picks: 1st=1.3x, 2nd=1.2x, 3rd=1.15x, 4th=1.1x, 5th=1.0x
+	Captains: +1.15x multiplier
+	"""
+
+	ROLE_MULTIPLIERS = {
+		'keeper': 1.15,
+		'seeker': 1.15,
+		'beater': 1.15,
+		'chaser': 1.0
+	}
+
+	DRAFT_MULTIPLIERS = [1.3, 1.2, 1.15, 1.1, 1.0]  # For picks 1-5
+
+	CAPTAIN_MULTIPLIER = 1.15
+	MIN_GAIN = 4
+	MIN_LOSS = 4
+	K_FACTOR = 48
+
+	def __init__(self, **kwargs):
+		super().__init__(**kwargs)
+
+	def _get_role_multiplier(self, member):
+		"""Get role multiplier from Discord member's roles"""
+		if not hasattr(member, 'roles'):
+			return 1.0
+		
+		role_names = [r.name.lower() for r in member.roles]
+		
+		# Check for high-value roles (Keeper, Seeker, Beater)
+		for role in ['keeper', 'seeker', 'beater']:
+			if role in role_names:
+				return self.ROLE_MULTIPLIERS[role]
+		
+		# Default to Chaser
+		return self.ROLE_MULTIPLIERS['chaser']
+
+	def _get_draft_multiplier(self, draft_position):
+		"""Get draft multiplier based on pick position (0-indexed)"""
+		if draft_position < 0 or draft_position >= len(self.DRAFT_MULTIPLIERS):
+			return 1.0
+		return self.DRAFT_MULTIPLIERS[draft_position]
+
+	def _get_team_differential_multiplier(self, team_avg_rating, opponent_avg_rating, is_winner):
+		"""Calculate multiplier based on team strength difference"""
+		diff = (team_avg_rating - opponent_avg_rating) / 200
+		
+		if is_winner:
+			# Winners: less gain if favored, more if underdogs
+			multiplier = 0.8 + max(0.2, min(1.2, 1 + diff))
+		else:
+			# Losers: more loss if favored, less if underdogs
+			multiplier = 0.8 + max(0.2, min(1.2, 1 - diff))
+		
+		return multiplier
+
+	def _calculate_expected_score(self, player_rating, opponent_avg_rating):
+		"""Calculate expected win probability using Elo formula"""
+		return 1 / (1 + 10 ** ((opponent_avg_rating - player_rating) / 400))
+
+	def rate(self, winners, losers, draw=False, winner_meta=None, loser_meta=None):
+		"""
+		Rate teams with Quidditch weighting.
+		
+		Args:
+			winners: List of winner player dicts
+			losers: List of loser player dicts
+			draw: Bool if game was a draw
+			winner_meta: Dict with 'members' (Discord members), 'draft_positions', 'captains'
+			loser_meta: Dict with 'members' (Discord members), 'draft_positions', 'captains'
+		"""
+		winner_meta = winner_meta or {'members': {}, 'draft_positions': {}, 'captains': set()}
+		loser_meta = loser_meta or {'members': {}, 'draft_positions': {}, 'captains': set()}
+		
+		# Calculate team average ratings
+		winner_avg = sum(p['rating'] for p in winners) / len(winners) if winners else self.init_rp
+		loser_avg = sum(p['rating'] for p in losers) / len(losers) if losers else self.init_rp
+		
+		r1, r2 = [], []
+		
+		# Process winners
+		for p in winners:
+			# Score: 1 for win, 0.5 for draw, 0 for loss
+			actual_score = 0.5 if draw else 1
+			expected_score = self._calculate_expected_score(p['rating'], loser_avg)
+			
+			# Base change
+			base_change = self.K_FACTOR * (actual_score - expected_score)
+			
+			# Apply multipliers
+			member = winner_meta['members'].get(p['user_id'])
+			role_mult = self._get_role_multiplier(member) if member else 1.0
+			
+			draft_pos = winner_meta['draft_positions'].get(p['user_id'], 4)  # Default to 5th pick
+			draft_mult = self._get_draft_multiplier(draft_pos)
+			
+			captain_mult = self.CAPTAIN_MULTIPLIER if p['user_id'] in winner_meta['captains'] else 1.0
+			
+			team_diff_mult = self._get_team_differential_multiplier(winner_avg, loser_avg, is_winner=True)
+			
+			# Final rating change
+			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult
+			
+			# Apply minimum gain
+			r_change = max(self.MIN_GAIN, r_change)
+			
+			new = self._scale_changes(p, r_change, 0, 0 if draw else 1)
+			r1.append(new)
+		
+		# Process losers
+		for p in losers:
+			# Score: 0.5 for draw, 0 for loss
+			actual_score = 0.5 if draw else 0
+			expected_score = self._calculate_expected_score(p['rating'], winner_avg)
+			
+			# Base change
+			base_change = self.K_FACTOR * (actual_score - expected_score)
+			
+			# Apply multipliers
+			member = loser_meta['members'].get(p['user_id'])
+			role_mult = self._get_role_multiplier(member) if member else 1.0
+			
+			draft_pos = loser_meta['draft_positions'].get(p['user_id'], 4)  # Default to 5th pick
+			draft_mult = self._get_draft_multiplier(draft_pos)
+			
+			captain_mult = self.CAPTAIN_MULTIPLIER if p['user_id'] in loser_meta['captains'] else 1.0
+			
+			team_diff_mult = self._get_team_differential_multiplier(loser_avg, winner_avg, is_winner=False)
+			
+			# Final rating change
+			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult
+			
+			# Apply minimum loss (more negative)
+			r_change = min(-self.MIN_LOSS, r_change)
+			
+			new = self._scale_changes(p, r_change, 0, 0 if draw else -1)
+			r2.append(new)
+		
 		return [r1, r2]

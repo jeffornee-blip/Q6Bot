@@ -175,17 +175,32 @@ async def register_match_ranked(ctx, m):
 		await m.qc.rating.get_players((p.id for p in m.teams[1])),
 	]]
 
+	# Build metadata for rating system
+	captains_set = {c.id for c in m.captains} if hasattr(m, 'captains') else set()
+	alpha_meta = {
+		'members': {p.id: p for p in m.teams[0]},
+		'draft_positions': m.draft_positions if hasattr(m, 'draft_positions') else {},
+		'captains': {c.id for c in m.captains if c in m.teams[0]} if hasattr(m, 'captains') else set()
+	}
+	beta_meta = {
+		'members': {p.id: p for p in m.teams[1]},
+		'draft_positions': m.draft_positions if hasattr(m, 'draft_positions') else {},
+		'captains': {c.id for c in m.captains if c in m.teams[1]} if hasattr(m, 'captains') else set()
+	}
+
 	if m.winner is None:  # draw
-		after = m.qc.rating.rate(winners=results[0][0], losers=results[0][1], draw=True)
+		after = m.qc.rating.rate(winners=results[0][0], losers=results[0][1], draw=True, winner_meta=alpha_meta, loser_meta=beta_meta)
 		results.append(after)
 	else:  # process actual scores
 		n = 0
 		while n < m.scores[0] or n < m.scores[1]:
 			if n < m.scores[0]:
-				after = m.qc.rating.rate(winners=results[-1][0], losers=results[-1][1], draw=False)
+				# Team 0 scored - they are winners this point
+				after = m.qc.rating.rate(winners=results[-1][0], losers=results[-1][1], draw=False, winner_meta=alpha_meta, loser_meta=beta_meta)
 				results.append(after)
 			if n < m.scores[1]:
-				after = m.qc.rating.rate(winners=results[-1][1], losers=results[-1][0], draw=False)
+				# Team 1 scored - they are winners this point
+				after = m.qc.rating.rate(winners=results[-1][1], losers=results[-1][0], draw=False, winner_meta=beta_meta, loser_meta=alpha_meta)
 				results.append(after[::-1])
 			n += 1
 

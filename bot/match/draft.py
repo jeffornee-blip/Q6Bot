@@ -83,6 +83,10 @@ class Draft:
 
 			self.m.teams[2].remove(player)
 			team.append(player)
+			
+			# Track draft position (0 = 1st pick, 1 = 2nd pick, etc.)
+			draft_position = min(pick_step, 4)  # Cap at 4 (5th pick)
+			self.m.draft_positions[player.id] = draft_position
 
 			# auto last-pick rest of the players if possible
 			# if rest of pick_order covers the unpicked list
@@ -90,6 +94,11 @@ class Draft:
 				# if rest of pick_order is a single team
 				if len(set(self.pick_order[pick_step+1:])) == 1:
 					picker_team = self.m.teams[self.pick_order[pick_step+1]]
+					for remaining_player in self.m.teams[2]:
+						# Track draft position for auto-picked players
+						auto_pick_step = max(0, (len(self.m.teams[0]) + len(self.m.teams[1]) - 2))
+						auto_draft_position = min(auto_pick_step, 4)
+						self.m.draft_positions[remaining_player.id] = auto_draft_position
 					picker_team.extend(self.m.teams[2])
 					self.m.teams[2].clear()
 
@@ -110,6 +119,13 @@ class Draft:
 			}
 
 		team.append(player)
+		
+		# Track draft position if moving from unpicked to a team during draft
+		if old_team is None or old_team.idx == 2:  # Was unpicked or is being moved from unpicked
+			if team.idx in [0, 1]:  # Moving to an actual team
+				draft_position = max(0, (len(self.m.teams[0]) + len(self.m.teams[1]) - 2))
+				self.m.draft_positions[player.id] = min(draft_position, 4)
+		
 		await self.m.qc.remove_members(player, ctx=ctx)
 		await self.refresh(ctx)
 
