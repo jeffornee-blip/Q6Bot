@@ -16,8 +16,7 @@ async def last_game(ctx, queue: str = None, player: Member = None, match_id: int
 	if match_id:
 		lg = await db.select_one(
 			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, match_id=match_id), order_by="match_id", limit=1
-
-
+		)
 	elif queue:
 		if queue := find(lambda q: q.name.lower() == queue.lower(), ctx.qc.queues):
 			lg = await db.select_one(
