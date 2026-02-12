@@ -15,9 +15,9 @@ class Embeds:
 			# icon_url="https://cdn.discordapp.com/avatars/240843400457355264/a51a5bf3b34d94922fd60751ba1d60ab.png?size=64"
 		)
 
-	       def _ranked_nick(self, p: Member):
-		       # Always use emoji rank, never fallback to (D) or text
-		       return f'{self.m.rank_str(p)}`{get_nick(p)}`'
+	def _ranked_nick(self, p: Member):
+		# Always use emoji rank, never fallback to (D) or text
+		return f'{self.m.rank_str(p)}`{get_nick(p)}`'
 
 	def _ranked_mention(self, p: Member):
 		if self.m.ranked:
