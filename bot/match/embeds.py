@@ -75,11 +75,11 @@ class Embeds:
 				queue=self.m.queue.name[0].upper()+self.m.queue.name[1:]
 			)
 		)
-		       teams_names = [
-			       f"{t.name.capitalize()} {t.emoji}" +
-			       (f" `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
-			       for t in self.m.teams[:2]
-		       ]
+		teams_names = [
+			f"{t.name[:1].upper() + t.name[1:]} {t.emoji}" +
+			(f" `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
+			for t in self.m.teams[:2]
+		]
 		team_players = [
 			" \u200b ".join([
 				self._ranked_nick(p) for p in t
