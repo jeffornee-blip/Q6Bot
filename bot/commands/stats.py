@@ -148,21 +148,16 @@ async def rank(ctx, player: Member = None):
 				if len(changes):
 					embed.add_field(
 						name=ctx.qc.gt("Last changes:"),
-						value="\n".join(("\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
-							ago=seconds_to_str(int(time() - c['at'])),
-							reason=c['reason'],
-							match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
-							change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
-						) for c in changes))
+						value="\n".join((
+							"\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
+								ago=seconds_to_str(int(time() - c['at'])),
+								reason=c['reason'],
+								match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
+								change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
+							) for c in changes)
+						)
 					)
 				await ctx.reply(embed=embed)
-					ago=seconds_to_str(int(time() - c['at'])),
-					reason=c['reason'],
-					match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
-					change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
-				) for c in changes))
-			)
-		await ctx.reply(embed=embed)
 
 	else:
 		raise bot.Exc.ValueError(ctx.qc.gt("No rating data found."))
