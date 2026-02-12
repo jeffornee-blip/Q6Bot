@@ -1,0 +1,9 @@
+config.cfg
+.version
+*.pyc
+__pycache__/
+.DS_Store
+*.log
+saved_state.json
+venv/
+.env
