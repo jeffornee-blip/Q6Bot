@@ -16,15 +16,12 @@ class Embeds:
 		)
 
 	def _ranked_nick(self, p: Member):
-		# Always use emoji rank, never fallback to (D) or text
-		return f'{self.m.rank_str(p)}`{get_nick(p)}`'
+		# Always use emoji rank, never fallback to letter grades or text
+		return f'{self.m.rank_str(p)} `{get_nick(p)}`'
 
 	def _ranked_mention(self, p: Member):
-		if self.m.ranked:
-			if self.m.qc.cfg.emoji_ranks:
-				return f'{self.m.rank_str(p)}{p.mention}'
-			return f'`{self.m.rank_str(p)}`{p.mention}'
-		return p.mention
+		# Always use emoji rank, never fallback to letter grades or text
+		return f'{self.m.rank_str(p)} {p.mention}'
 
 	def check_in(self, not_ready):
 		embed = Embed(

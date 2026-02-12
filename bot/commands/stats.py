@@ -119,42 +119,43 @@ async def rank(ctx, player: Member = None):
 	else:
 		data = await db.select(
 			['user_id', 'rating', 'deviation', 'channel_id', 'wins', 'losses', 'draws', 'is_hidden', 'streak'],
-			"qc_players",
-			where={'channel_id': ctx.qc.rating.channel_id}
-		)
-		p = find(lambda i: i['user_id'] == target.id, data)
-		place = "?"
-
-	if p:
-		embed = Embed(title=f"__{get_nick(target)}__", colour=Colour(0x7289DA))
-		embed.add_field(name="№", value=f"**{place}**", inline=True)
-		embed.add_field(name=ctx.qc.gt("Matches"), value=f"**{(p['wins'] + p['losses'] + p['draws'])}**", inline=True)
-		if p['rating']:
-			embed.add_field(name=ctx.qc.gt("Rank"), value=f"**{ctx.qc.rating_rank(p['rating'])['rank']}**", inline=True)
-			embed.add_field(name=ctx.qc.gt("Rating"), value=f"**{p['rating']}**±{p['deviation']}")
-		else:
-			embed.add_field(name=ctx.qc.gt("Rank"), value="**〈?〉**", inline=True)
-			embed.add_field(name=ctx.qc.gt("Rating"), value="**?**")
-		embed.add_field(
-			name="W/L/D/S",
-			value="**{wins}**/**{losses}**/**{draws}**/**{streak}**".format(**p),
-			inline=True
-		)
-		embed.add_field(name=ctx.qc.gt("Winrate"), value="**{}%**\n\u200b".format(
-			int(p['wins'] * 100 / (p['wins'] + p['losses'] or 1))
-		), inline=True)
-		if target.display_avatar:
-			embed.set_thumbnail(url=target.display_avatar.url)
-
-		changes = await db.select(
-			('at', 'rating_change', 'match_id', 'reason'),
-			'qc_rating_history', where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
-			order_by='id', limit=5
-		)
-		if len(changes):
-			embed.add_field(
-				name=ctx.qc.gt("Last changes:"),
-				value="\n".join(("\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
+			if p:
+				embed = Embed(title=f"__{get_nick(target)}__", colour=Colour(0x7289DA))
+				embed.add_field(name="№", value=f"**{place}**", inline=True)
+				embed.add_field(name=ctx.qc.gt("Matches"), value=f"**{(p['wins'] + p['losses'] + p['draws'])}**", inline=True)
+				if p['rating']:
+					# Only show emoji rank
+					embed.add_field(name=ctx.qc.gt("Rank"), value=f"{ctx.qc.rating_rank(p['rating'])['rank']}", inline=True)
+					embed.add_field(name=ctx.qc.gt("Rating"), value=f"**{p['rating']}**±{p['deviation']}")
+				else:
+					embed.add_field(name=ctx.qc.gt("Rank"), value="?", inline=True)
+					embed.add_field(name=ctx.qc.gt("Rating"), value="**?**")
+				embed.add_field(
+					name="W/L/D/S",
+					value="**{wins}**/**{losses}**/**{draws}**/**{streak}**".format(**p),
+					inline=True
+				)
+				embed.add_field(name=ctx.qc.gt("Winrate"), value="**{}%**\n\u200b".format(
+					int(p['wins'] * 100 / (p['wins'] + p['losses'] or 1))
+				), inline=True)
+				if target.display_avatar:
+					embed.set_thumbnail(url=target.display_avatar.url)
+				changes = await db.select(
+					('at', 'rating_change', 'match_id', 'reason'),
+					'qc_rating_history', where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
+					order_by='id', limit=5
+				)
+				if len(changes):
+					embed.add_field(
+						name=ctx.qc.gt("Last changes:"),
+						value="\n".join(("\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
+							ago=seconds_to_str(int(time() - c['at'])),
+							reason=c['reason'],
+							match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
+							change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
+						) for c in changes))
+					)
+				await ctx.reply(embed=embed)
 					ago=seconds_to_str(int(time() - c['at'])),
 					reason=c['reason'],
 					match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
@@ -190,7 +191,7 @@ async def leaderboard(ctx, page: int = 1):
 			name="W / L / D",
 			value="\n".join((
 				f"**{row['wins']}** / **{row['losses']}** / **{row['draws']}** (" +
-				str(int(row['wins'] * 100 / ((row['wins'] + row['losses']) or 1))) + "%)"
+				str(int(row['wins'] * 100 / ((row['wins'] + row['losses']) or 1))) + "%")
 				for row in data
 			)),
 			inline=True
@@ -198,7 +199,7 @@ async def leaderboard(ctx, page: int = 1):
 		embed.add_field(
 			name="Rating",
 			value="\n".join((
-				ctx.qc.rating_rank(row['rating'])['rank'] + f" **{row['rating']}**"
+				f"{ctx.qc.rating_rank(row['rating'])['rank']} **{row['rating']}**"
 				for row in data
 			)),
 			inline=True
