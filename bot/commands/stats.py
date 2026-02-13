@@ -38,16 +38,6 @@ async def last_game(ctx, queue: str = None, player: Member = None, match_id: int
 		)
 
 	players = await db.select(
-	if match_id:
-		lg = await db.select_one(
-			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, match_id=match_id), order_by="match_id", limit=1
-		)
-	elif queue:
-		if queue := find(lambda q: q.name.lower() == queue.lower(), ctx.qc.queues):
-			lg = await db.select_one(
-				['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, queue_id=queue.id), order_by="match_id", limit=1
-			)
-	elif player and (member := await ctx.get_member(player)) is not None:
 		if match := await db.select_one(
 			['match_id'], "qc_player_matches", where=dict(channel_id=ctx.qc.id, user_id=member.id),
 			order_by="match_id", limit=1
