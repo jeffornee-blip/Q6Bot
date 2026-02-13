@@ -300,17 +300,17 @@ class QueueChannel:
 					Variables.RoleVar("role", description="Assign a guild role to the rank owners.")
 				],
 				   default=[
-                       dict(rank="<:CHAD:1471666916040114257>", rating=0, role=None),  # CHAD
+                       dict(rank="<:CHAD:1471923932558000270>", rating=0, role=None),  # CHAD
                        dict(rank="<:WOOD:1471609879142600748>", rating=800, role=None),  # WOOD
-                       dict(rank="<:LEAD:1471609859500675082>", rating=1000, role=None),  # LEAD
-                       dict(rank="<:BRNZ:1471609838504251525>", rating=1200, role=None),  # BRONZE
-                       dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None),  # SILVER
-                       dict(rank="<:GOLD:1471609800042221742>", rating=1600, role=None),  # GOLD
-                       dict(rank="<:DIAM:1471609760104058880>", rating=1800, role=None),  # DIAMOND
-                       dict(rank="<:CHMP:1471609732853665834>", rating=2000, role=None),  # CHAMPION
-                       dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)   # STAR
-				   ],
-				   blank=dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None)
+                       dict(rank="<:IRON:1471610220269666435>", rating=1000, role=None),  # IRON
+                       dict(rank="<:BRNZ:1471610239299223644>", rating=1200, role=None),  # BRONZE
+                       dict(rank="<:SILV:1471610253559988429>", rating=1400, role=None),  # SILVER
+                       dict(rank="<:GOLD:1471610519696707585>", rating=1600, role=None),  # GOLD
+                       dict(rank="<:DIAM:1471610536604209272>", rating=1800, role=None),  # DIAMOND
+                       dict(rank="<:CHMP:1471610553897324595>", rating=2000, role=None),  # CHAMPION
+                       dict(rank="<:STAR:1471610576697426194>", rating=2200, role=None)   # STAR
+			   ],
+			   blank=dict(rank="<:SILV:1471610253559988429>", rating=1400, role=None)
 			)
 		]
 	)
@@ -380,15 +380,15 @@ class QueueChannel:
 	def _ranks_table(self):
 		# Hardcoded defaults to use if database ranks are corrupted
 		default_ranks = [
-			dict(rank="<:CHAD:1471666916040114257>", rating=0, role=None),
+			dict(rank="<:CHAD:1471923932558000270>", rating=0, role=None),
 			dict(rank="<:WOOD:1471609879142600748>", rating=800, role=None),
-			dict(rank="<:LEAD:1471609859500675082>", rating=1000, role=None),
-			dict(rank="<:BRNZ:1471609838504251525>", rating=1200, role=None),
-			dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None),
-			dict(rank="<:GOLD:1471609800042221742>", rating=1600, role=None),
-			dict(rank="<:DIAM:1471609760104058880>", rating=1800, role=None),
-			dict(rank="<:CHMP:1471609732853665834>", rating=2000, role=None),
-			dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)
+			dict(rank="<:IRON:1471610220269666435>", rating=1000, role=None),
+			dict(rank="<:BRNZ:1471610239299223644>", rating=1200, role=None),
+			dict(rank="<:SILV:1471610253559988429>", rating=1400, role=None),
+			dict(rank="<:GOLD:1471610519696707585>", rating=1600, role=None),
+			dict(rank="<:DIAM:1471610536604209272>", rating=1800, role=None),
+			dict(rank="<:CHMP:1471610553897324595>", rating=2000, role=None),
+			dict(rank="<:STAR:1471610576697426194>", rating=2200, role=None)
 		]
 		
 		# Get ranks from config or rating channel config
