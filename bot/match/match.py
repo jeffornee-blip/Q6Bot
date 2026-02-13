@@ -441,9 +441,13 @@ class Match:
 		await self.finish_match(ctx)
 
 	async def print_rating_results(self, ctx, before, after):
-		msg = "```markdown\n"
-		msg += f"{self.queue.name.capitalize()}({self.id}) results\n"
-		msg += "-------------"
+		# Create embed message with prettier formatting
+		from nextcord import Embed, Colour
+		
+		embed = Embed(
+			colour=Colour(0x2ecc71),
+			title=f"**{self.queue.name.capitalize()}({self.id}) results**"
+		)
 
 		if self.winner is not None:
 			winners, losers = self.teams[self.winner], self.teams[abs(self.winner-1)]
@@ -452,21 +456,59 @@ class Match:
 
 		if len(winners) == 1 and len(losers) == 1:
 			p = winners[0]
-			msg += f"\n1. {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
+			winner_diff = after[p.id]['rating'] - before[p.id]['rating']
+			winner_text = f"{self.rank_str(p)} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({winner_diff:+d})"
+			
 			p = losers[0]
-			msg += f"\n2. {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
+			loser_diff = after[p.id]['rating'] - before[p.id]['rating']
+			loser_text = f"{self.rank_str(p)} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({loser_diff:+d})"
+			
+			embed.add_field(name="Winner", value=winner_text, inline=False)
+			embed.add_field(name="Loser", value=loser_text, inline=False)
 		else:
-			n = 0
-			for team in (winners, losers):
+			for team_idx, team in enumerate((winners, losers)):
 				avg_bf = int(sum((before[p.id]['rating'] for p in team))/len(team))
 				avg_af = int(sum((after[p.id]['rating'] for p in team))/len(team))
-				msg += f"\n{n}. {team.name} {avg_bf} ⟼ {avg_af}\n"
-				msg += "\n".join(
-					(f"> {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}" for p in team)
-				)
-				n += 1
-		msg += "```"
-		await ctx.notice(msg)
+				team_diff = avg_af - avg_bf
+				
+				team_header = f"{team.name} {avg_bf} ⟼ {avg_af} ({team_diff:+d})"
+				team_players = []
+				for p in team:
+					player_diff = after[p.id]['rating'] - before[p.id]['rating']
+					team_players.append(f"{self.rank_str(p)} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({player_diff:+d})")
+				
+				embed.add_field(name=team_header, value="\n".join(team_players), inline=False)
+		
+		try:
+			await ctx.notice(embed=embed)
+		except:
+			# Fallback to old markdown format if embed fails
+			msg = "```markdown\n"
+			msg += f"{self.queue.name.capitalize()}({self.id}) results\n"
+			msg += "-------------"
+			
+			if self.winner is not None:
+				winners, losers = self.teams[self.winner], self.teams[abs(self.winner-1)]
+			else:
+				winners, losers = self.teams[:2]
+
+			if len(winners) == 1 and len(losers) == 1:
+				p = winners[0]
+				msg += f"\n1. {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
+				p = losers[0]
+				msg += f"\n2. {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
+			else:
+				n = 0
+				for team in (winners, losers):
+					avg_bf = int(sum((before[p.id]['rating'] for p in team))/len(team))
+					avg_af = int(sum((after[p.id]['rating'] for p in team))/len(team))
+					msg += f"\n{n}. {team.name} {avg_bf} ⟼ {avg_af}\n"
+					msg += "\n".join(
+						(f"> {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}" for p in team)
+					)
+					n += 1
+			msg += "```"
+			await ctx.notice(msg)
 
 	async def final_message(self, ctx):
 		#  Embed message with teams

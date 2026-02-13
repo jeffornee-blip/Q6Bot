@@ -132,7 +132,7 @@ class Embeds:
 			embed.add_field(name=self.m.gt("Players"), value=players, inline=False)
 		elif len(self.m.teams[0]):  # team vs team
 			teams_names = [
-				f"{t.emoji} \u200b **{t.name}**" +
+				f"{t.name[:1].upper() + t.name[1:]} {t.emoji}" +
 				(f" \u200b `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
 				for t in self.m.teams[:2]
 			]
