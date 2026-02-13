@@ -1,6 +1,6 @@
 __all__ = [
 	'create_pickup', 'delete_queue', 'show_queues', 'set_qc', 'set_queue', 'cfg_qc', 'cfg_queue',
-	'set_qc_cfg', 'set_queue_cfg'
+	'set_qc_cfg', 'set_queue_cfg', 'reset_qc'
 ]
 
 import json
@@ -118,3 +118,10 @@ async def set_queue_cfg(ctx, queue: str, cfg: str):
 		raise bot.Exc.ValueError(str(e))
 	else:
 		await ctx.success(f"__{q.name}__ queue configuration updated.")
+
+
+async def reset_qc(ctx):
+	""" Reset QueueChannel configuration to defaults """
+	ctx.check_perms(ctx.Perms.ADMIN)
+	await ctx.qc.cfg.delete()
+	await ctx.success("Channel configuration reset to defaults.")

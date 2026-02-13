@@ -267,6 +267,12 @@ async def _set_qc(
 _set_qc.on_autocomplete("variable")(autocomplete.qc_variables)
 
 
+@groups.admin_channel.subcommand(name='reset', description='Reset channel configuration to defaults.')
+async def _reset_qc(
+		interaction: Interaction
+): await run_slash(bot.commands.reset_qc, interaction=interaction)
+
+
 # match -> ...
 
 @groups.admin_match.subcommand(name='report', description='Report a match result as a moderator.')

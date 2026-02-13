@@ -56,6 +56,7 @@
 | /channel disable      | Disable the bot this channel                            |
 | /channel show         | Show channel configuration                              |
 | /channel set          | Configure a channel variable                            |
+| /channel reset        | Reset channel configuration to defaults                 |
 |-                      |                                                         |
 | /queue create_pickup  | Create a new pickup queue                               |
 | /queue list           | List all queues on the channel                          |
