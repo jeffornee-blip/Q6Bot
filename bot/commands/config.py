@@ -137,9 +137,9 @@ async def reset_qc(ctx):
 		dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)
 	]
 	
-	# Reset to defaults by updating with hardcoded values
+	# Reset to defaults by updating with proper string values
 	await ctx.qc.cfg.update({
-		"emoji_ranks": True,
+		"emoji_ranks": "on",
 		"ranks": default_ranks
 	})
 	await ctx.success("Channel configuration reset to defaults.")
