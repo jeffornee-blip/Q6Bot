@@ -123,5 +123,24 @@ async def set_queue_cfg(ctx, queue: str, cfg: str):
 async def reset_qc(ctx):
 	""" Reset QueueChannel configuration to defaults """
 	ctx.check_perms(ctx.Perms.ADMIN)
+	
+	# Define the default ranks with correct emoji IDs
+	default_ranks = [
+		dict(rank="<:CHAD:1471666916040114257>", rating=0, role=None),
+		dict(rank="<:WOOD:1471609879142600748>", rating=800, role=None),
+		dict(rank="<:LEAD:1471609859500675082>", rating=1000, role=None),
+		dict(rank="<:BRNZ:1471609838504251525>", rating=1200, role=None),
+		dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None),
+		dict(rank="<:GOLD:1471609800042221742>", rating=1600, role=None),
+		dict(rank="<:DIAM:1471609760104058880>", rating=1800, role=None),
+		dict(rank="<:CHMP:1471609732853665834>", rating=2000, role=None),
+		dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)
+	]
+	
+	# Delete old config and set defaults with correct ranks
 	await ctx.qc.cfg.delete()
+	await ctx.qc.cfg.update({
+		"emoji_ranks": True,
+		"ranks": default_ranks
+	})
 	await ctx.success("Channel configuration reset to defaults.")
