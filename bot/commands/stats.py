@@ -168,23 +168,23 @@ async def leaderboard(ctx, page: int = 1):
 			)),
 			inline=True
 		)
-		embed.add_field(
-			name="W / L / D",
+		   embed.add_field(
+			   name="W / L / D",
 			   value="\n".join(
-					   f"**{row['wins']}** / **{row['losses']}** / **{row['draws']}** ("
-					   + str(int(row['wins'] * 100 / ((row['wins'] + row['losses']) or 1))) + "%")
-					   for row in data
-				   ),
-			inline=True
-		)
-		embed.add_field(
-			name="Rating",
+				   f"**{row['wins']}** / **{row['losses']}** / **{row['draws']}** ("
+				   + str(int(row['wins'] * 100 / ((row['wins'] + row['losses']) or 1))) + "%)"
+				   for row in data
+			   ),
+			   inline=True
+		   )
+		   embed.add_field(
+			   name="Rating",
 			   value="\n".join(
-					   f"{ctx.qc.rating_rank(row['rating'])['rank']} **{row['rating']}**"
-					   for row in data
-				   ),
-			inline=True
-		)
+				   f"{ctx.qc.rating_rank(row['rating'])['rank']} **{row['rating']}**"
+				   for row in data
+			   ),
+			   inline=True
+		   )
 		await ctx.reply(embed=embed)
 		return
 
