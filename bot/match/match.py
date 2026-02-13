@@ -186,9 +186,10 @@ class Match:
 		self.scores = [0, 0]
 
 
-		# Always use Harry Potter house names and emojis for teams
-		team_names = self.HOUSE_NAMES[:2]
-		team_emojis = self.HOUSE_EMOJIS[:2]
+		# Randomly select 2 different houses for teams
+		selected_indices = random.sample(range(len(self.HOUSE_NAMES)), 2)
+		team_names = [self.HOUSE_NAMES[i] for i in selected_indices]
+		team_emojis = [self.HOUSE_EMOJIS[i] for i in selected_indices]
 		self.teams = [
 			self.Team(name=f"{team_emojis[0]} {team_names[0]}", emoji=team_emojis[0], idx=0),
 			self.Team(name=f"{team_emojis[1]} {team_names[1]}", emoji=team_emojis[1], idx=1),

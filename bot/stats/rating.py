@@ -325,8 +325,8 @@ class Quidditch6v6Rating(BaseRating):
 	DRAFT_MULTIPLIERS = [1.3, 1.2, 1.15, 1.1, 1.0]  # For picks 1-5
 
 	CAPTAIN_MULTIPLIER = 1.15
-	MIN_GAIN = 4
-	MIN_LOSS = 4
+	MIN_GAIN = 10
+	MIN_LOSS = 10
 	K_FACTOR = 48
 
 	def __init__(self, **kwargs):
@@ -354,15 +354,15 @@ class Quidditch6v6Rating(BaseRating):
 		return self.DRAFT_MULTIPLIERS[draft_position]
 
 	def _get_team_differential_multiplier(self, team_avg_rating, opponent_avg_rating, is_winner):
-		"""Calculate multiplier based on team strength difference"""
+		"""Calculate multiplier based on team strength difference (capped at 1.5)"""
 		diff = (team_avg_rating - opponent_avg_rating) / 200
 		
 		if is_winner:
 			# Winners: less gain if favored, more if underdogs
-			multiplier = 0.8 + max(0.2, min(1.2, 1 + diff))
+			multiplier = 0.8 + max(0.2, min(1.5, 1 + diff))
 		else:
 			# Losers: more loss if favored, less if underdogs
-			multiplier = 0.8 + max(0.2, min(1.2, 1 - diff))
+			multiplier = 0.8 + max(0.2, min(1.5, 1 - diff))
 		
 		return multiplier
 
@@ -423,7 +423,8 @@ class Quidditch6v6Rating(BaseRating):
 		for p in winners:
 			# Score: 1 for win, 0.5 for draw, 0 for loss
 			actual_score = 0.5 if draw else 1
-			expected_score = self._calculate_expected_score(p['rating'], loser_avg)
+			# Use team average vs team average for team games (not individual vs opponent)
+			expected_score = self._calculate_expected_score(winner_avg, loser_avg)
 			
 			# Base change
 			base_change = self.K_FACTOR * (actual_score - expected_score)
@@ -454,7 +455,8 @@ class Quidditch6v6Rating(BaseRating):
 		for p in losers:
 			# Score: 0.5 for draw, 0 for loss
 			actual_score = 0.5 if draw else 0
-			expected_score = self._calculate_expected_score(p['rating'], winner_avg)
+			# Use team average vs team average for team games (not individual vs opponent)
+			expected_score = self._calculate_expected_score(loser_avg, winner_avg)
 			
 			# Base change
 			base_change = self.K_FACTOR * (actual_score - expected_score)
