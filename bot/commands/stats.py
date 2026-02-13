@@ -38,17 +38,9 @@ async def last_game(ctx, queue: str = None, player: Member = None, match_id: int
 		)
 
 	players = await db.select(
-		if match := await db.select_one(
-			['match_id'], "qc_player_matches", where=dict(channel_id=ctx.qc.id, user_id=member.id),
-			order_by="match_id", limit=1
-		):
-			lg = await db.select_one(
-				['*'], "qc_matches", where=dict(channel_id=ctx.qc.id, match_id=match['match_id'])
-			)
-	else:
-		lg = await db.select_one(
-			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id), order_by="match_id", limit=1
-		)
+		['user_id', 'nick', 'team'], "qc_player_matches",
+		where=dict(match_id=lg['match_id'])
+	)
 
 async def stats(ctx, player: Member = None):
 	if player:
