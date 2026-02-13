@@ -290,7 +290,7 @@ class QueueChannel:
 				description="Display rank strings like emojis.",
 				section="Leaderboard",
 				notnull=True,
-				default=False
+				default=True
 			),
 			VariableTable(
 				'ranks', display="Rating ranks", section="Leaderboard",
