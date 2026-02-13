@@ -457,27 +457,34 @@ class Match:
 		if len(winners) == 1 and len(losers) == 1:
 			p = winners[0]
 			winner_diff = after[p.id]['rating'] - before[p.id]['rating']
-			winner_text = f"{self.rank_str(p)} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({winner_diff:+d})"
+			winner_text = f"{self.rank_str(p)} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({winner_diff:+d})"
 			
 			p = losers[0]
 			loser_diff = after[p.id]['rating'] - before[p.id]['rating']
-			loser_text = f"{self.rank_str(p)} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({loser_diff:+d})"
+			loser_text = f"{self.rank_str(p)} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({loser_diff:+d})"
 			
-			embed.add_field(name="Winner", value=winner_text, inline=False)
+			embed.add_field(name="🏆 Winner", value=winner_text, inline=False)
+			embed.add_field(name="——————————", value="\u200b", inline=False)
 			embed.add_field(name="Loser", value=loser_text, inline=False)
 		else:
-			for team_idx, team in enumerate((winners, losers)):
+			team_labels = ["🏆 Winner", "Loser"] if self.winner is not None else ["Team 1", "Team 2"]
+			
+			for team_idx, (team, label) in enumerate(zip((winners, losers), team_labels)):
 				avg_bf = int(sum((before[p.id]['rating'] for p in team))/len(team))
 				avg_af = int(sum((after[p.id]['rating'] for p in team))/len(team))
 				team_diff = avg_af - avg_bf
 				
-				team_header = f"{team.name} {avg_bf} ⟼ {avg_af} ({team_diff:+d})"
+				team_header = f"{label} - {team.name} {avg_bf} ⟼ {avg_af} ({team_diff:+d})"
 				team_players = []
 				for p in team:
 					player_diff = after[p.id]['rating'] - before[p.id]['rating']
-					team_players.append(f"{self.rank_str(p)} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({player_diff:+d})")
+					team_players.append(f"{self.rank_str(p)} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({player_diff:+d})")
 				
 				embed.add_field(name=team_header, value="\n".join(team_players), inline=False)
+				
+				# Add spacing between teams
+				if team_idx == 0:
+					embed.add_field(name="——————————", value="\u200b", inline=False)
 		
 		try:
 			await ctx.notice(embed=embed)
