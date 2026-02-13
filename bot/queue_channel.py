@@ -307,8 +307,8 @@ class QueueChannel:
                        dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None),  # SILVER
                        dict(rank="<:GOLD:1471609800042221742>", rating=1600, role=None),  # GOLD
                        dict(rank="<:DIAM:1471609760104058880>", rating=1800, role=None),  # DIAMOND
-                       dict(rank="<:CHMP:1471609732853665834>", rating=1900, role=None),  # CHAMPION
-                       dict(rank="<:STAR:1471609701140791338>", rating=2000, role=None)   # STAR
+                       dict(rank="<:CHMP:1471609732853665834>", rating=2000, role=None),  # CHAMPION
+                       dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)   # STAR
 				   ],
 				   blank=dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None)
 			)
@@ -378,10 +378,30 @@ class QueueChannel:
 
 	@property
 	def _ranks_table(self):
+		# Hardcoded defaults to use if database ranks are corrupted
+		default_ranks = [
+			dict(rank="<:CHAD:1471666916040114257>", rating=0, role=None),
+			dict(rank="<:WOOD:1471609879142600748>", rating=800, role=None),
+			dict(rank="<:LEAD:1471609859500675082>", rating=1000, role=None),
+			dict(rank="<:BRNZ:1471609838504251525>", rating=1200, role=None),
+			dict(rank="<:SILV:1471609818413404191>", rating=1400, role=None),
+			dict(rank="<:GOLD:1471609800042221742>", rating=1600, role=None),
+			dict(rank="<:DIAM:1471609760104058880>", rating=1800, role=None),
+			dict(rank="<:CHMP:1471609732853665834>", rating=2000, role=None),
+			dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)
+		]
+		
+		# Get ranks from config or rating channel config
 		if self.cfg.rating_channel:
-			return (bot.queue_channels.get(self.cfg.rating_channel.id) or self).cfg.ranks
+			ranks = (bot.queue_channels.get(self.cfg.rating_channel.id) or self).cfg.ranks
 		else:
-			return self.cfg.ranks
+			ranks = self.cfg.ranks
+		
+		# Check if any ranks are corrupted (e.g., ":SILV:" instead of "<:SILV:ID>")
+		if ranks and any(isinstance(r.get('rank'), str) and r['rank'].startswith(':') and r['rank'].endswith(':') for r in ranks):
+			return default_ranks
+		
+		return ranks
 
 	async def new_queue(self, ctx, name, size, kind):
 		kind.validate_name(name)
