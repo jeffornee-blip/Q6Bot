@@ -145,9 +145,6 @@ async def rank(ctx, player: Member = None):
 		else:
 			raise bot.Exc.ValueError(ctx.qc.gt("No rating data found."))
 
-	else:
-		raise bot.Exc.ValueError(ctx.qc.gt("No rating data found."))
-
 
 async def leaderboard(ctx, page: int = 1):
 	page = (page or 1) - 1
