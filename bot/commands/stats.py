@@ -92,58 +92,66 @@ async def rank(ctx, player: Member = None):
 	if not target:
 		raise bot.Exc.SyntaxError(ctx.qc.gt("Specified user not found."))
 
-	data = await ctx.qc.get_lb()
-	# Figure out leaderboard placement
-	if p := find(lambda i: i['user_id'] == target.id, data):
-		place = data.index(p) + 1
-	else:
-		data = await db.select(
-			['user_id', 'rating', 'deviation', 'channel_id', 'wins', 'losses', 'draws', 'is_hidden', 'streak'],
-			'qc_players',
-			where={'channel_id': ctx.qc.rating.channel_id}
-		)
-		p = find(lambda i: i['user_id'] == target.id, data)
+	# Get player's direct data
+	p = await db.select_one(
+		['user_id', 'rating', 'deviation', 'channel_id', 'wins', 'losses', 'draws', 'is_hidden', 'streak'],
+		'qc_players',
+		where={'channel_id': ctx.qc.rating.channel_id, 'user_id': target.id}
+	)
+	
+	if p:
+		# Calculate rank placement only if player is not hidden
 		place = "?"
-		if p:
-			embed = Embed(title=f"__{get_nick(target)}__", colour=Colour(0x7289DA))
-			embed.add_field(name="№", value=f"**{place}**", inline=True)
-			embed.add_field(name=ctx.qc.gt("Matches"), value=f"**{(p['wins'] + p['losses'] + p['draws'])}**", inline=True)
-			if p['rating']:
-				embed.add_field(name=ctx.qc.gt("Rank"), value=f"{ctx.qc.rating_rank(p['rating'])['rank']}", inline=True)
-				embed.add_field(name=ctx.qc.gt("Rating"), value=f"**{p['rating']}**±{p['deviation']}")
-			else:
-				embed.add_field(name=ctx.qc.gt("Rank"), value="?", inline=True)
-				embed.add_field(name=ctx.qc.gt("Rating"), value="**?**")
-			embed.add_field(
-				name="W/L/D/S",
-				value="**{wins}**/**{losses}**/**{draws}**/**{streak}**".format(**p),
-				inline=True
+		if p['rating'] is not None and not p['is_hidden']:
+			# Fast rank calculation: count players with higher ratings (non-hidden only)
+			# Much faster than loading entire leaderboard
+			ranked_players = await db.select(
+				['rating'],
+				'qc_players',
+				where={'channel_id': ctx.qc.rating.channel_id, 'is_hidden': 0}
 			)
-			embed.add_field(name=ctx.qc.gt("Winrate"), value="**{}%**\n\u200b".format(
-				int(p['wins'] * 100 / (p['wins'] + p['losses'] or 1))
-			), inline=True)
-			if target.display_avatar:
-				embed.set_thumbnail(url=target.display_avatar.url)
-			changes = await db.select(
-				('at', 'rating_change', 'match_id', 'reason'),
-				'qc_rating_history', where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
-				order_by='id', limit=5
-			)
-			if len(changes):
-				embed.add_field(
-					name=ctx.qc.gt("Last changes:"),
-					value="\n".join((
-						"\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
-							ago=seconds_to_str(int(time() - c['at'])),
-							reason=c['reason'],
-							match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
-							change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
-						) for c in changes)
-					)
-				)
-			await ctx.reply(embed=embed)
+			# Count how many non-null rated players have higher rating
+			place = sum(1 for x in ranked_players if x['rating'] is not None and x['rating'] > p['rating']) + 1
+		
+		embed = Embed(title=f"__{get_nick(target)}__", colour=Colour(0x7289DA))
+		embed.add_field(name="№", value=f"**{place}**", inline=True)
+		embed.add_field(name=ctx.qc.gt("Matches"), value=f"**{(p['wins'] + p['losses'] + p['draws'])}**", inline=True)
+		if p['rating']:
+			embed.add_field(name=ctx.qc.gt("Rank"), value=f"{ctx.qc.rating_rank(p['rating'])['rank']}", inline=True)
+			embed.add_field(name=ctx.qc.gt("Rating"), value=f"**{p['rating']}**±{p['deviation']}")
 		else:
-			raise bot.Exc.ValueError(ctx.qc.gt("No rating data found."))
+			embed.add_field(name=ctx.qc.gt("Rank"), value="?", inline=True)
+			embed.add_field(name=ctx.qc.gt("Rating"), value="**?**")
+		embed.add_field(
+			name="W/L/D/S",
+			value="**{wins}**/**{losses}**/**{draws}**/**{streak}**".format(**p),
+			inline=True
+		)
+		embed.add_field(name=ctx.qc.gt("Winrate"), value="**{}%**\n\u200b".format(
+			int(p['wins'] * 100 / (p['wins'] + p['losses'] or 1))
+		), inline=True)
+		if target.display_avatar:
+			embed.set_thumbnail(url=target.display_avatar.url)
+		changes = await db.select(
+			('at', 'rating_change', 'match_id', 'reason'),
+			'qc_rating_history', where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
+			order_by='id', limit=5
+		)
+		if len(changes):
+			embed.add_field(
+				name=ctx.qc.gt("Last changes:"),
+				value="\n".join((
+					"\u200b \u200b **{change}** \u200b | {ago} ago | {reason}{match_id}".format(
+						ago=seconds_to_str(int(time() - c['at'])),
+						reason=c['reason'],
+						match_id=f"(__{c['match_id']:06d}__)" if c['match_id'] else "",
+						change=("+" if c['rating_change'] >= 0 else "") + str(c['rating_change'])
+					) for c in changes)
+				)
+			)
+		await ctx.reply(embed=embed)
+	else:
+		raise bot.Exc.ValueError(ctx.qc.gt("No rating data found."))
 
 
 async def leaderboard(ctx, page: int = 1):
