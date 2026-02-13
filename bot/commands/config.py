@@ -137,8 +137,7 @@ async def reset_qc(ctx):
 		dict(rank="<:STAR:1471609701140791338>", rating=2200, role=None)
 	]
 	
-	# Delete old config and set defaults with correct ranks
-	await ctx.qc.cfg.delete()
+	# Reset to defaults by updating with hardcoded values
 	await ctx.qc.cfg.update({
 		"emoji_ranks": True,
 		"ranks": default_ranks
