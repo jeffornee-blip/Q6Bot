@@ -103,9 +103,6 @@ class CheckIn:
 			self.m.maps = [self.maps[n] for n in order[:self.m.cfg['map_count']]]
 		await self.message.delete()
 
-		for p in (p for p in self.m.players if p.id in bot.auto_ready.keys()):
-			bot.auto_ready.pop(p.id)
-
 		await self.m.next_state(ctx)
 
 	async def process_reaction(self, reaction, user, remove=False):

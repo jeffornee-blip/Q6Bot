@@ -21,6 +21,11 @@ class Draft:
 			self.m.states.append(self.m.DRAFT)
 
 	async def start(self, ctx):
+		# Clear auto_ready and allow_offline when entering draft
+		for p in self.m.players:
+			bot.auto_ready.pop(p.id, None)
+			if p.id in bot.allow_offline:
+				bot.allow_offline.pop(p.id, None)
 		await self.refresh(ctx)
 
 	async def print(self, ctx):

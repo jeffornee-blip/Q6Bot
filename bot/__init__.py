@@ -25,7 +25,7 @@ queue_channels = dict()  # {channel.id: QueueChannel()}
 active_queues = []
 active_matches = []
 waiting_reactions = dict()  # {message.id: function}
-allow_offline = []  # [user_id]
+allow_offline = {}  # {user_id: timestamp}
 auto_ready = dict()  # {user.id: timestamp}
 
 

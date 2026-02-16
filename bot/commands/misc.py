@@ -91,10 +91,10 @@ async def default_expire(ctx, duration: timedelta = None, afk: bool = None, clea
 
 async def allow_offline(ctx):
 	if ctx.author.id in bot.allow_offline:
-		bot.allow_offline.remove(ctx.author.id)
+		bot.allow_offline.pop(ctx.author.id)
 		await ctx.success(ctx.qc.gt("Your offline immunity is **off**."))
 	else:
-		bot.allow_offline.append(ctx.author.id)
+		bot.allow_offline[ctx.author.id] = int(time()) + 10*60  # 10 minutes
 		await ctx.success(ctx.qc.gt("Your offline immunity is **on** until the next match."))
 
 

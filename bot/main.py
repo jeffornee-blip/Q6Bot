@@ -77,7 +77,8 @@ async def load_state():
 
 	log.info("Loading state...")
 
-	bot.allow_offline = list(data['allow_offline'])
+	bot.allow_offline = {}  # Initialize as empty dict; timestamps don't persist across restarts
+
 
 	for qd in data['queues']:
 		if qd.get('queue_type') in ['PickupQueue', None]:
