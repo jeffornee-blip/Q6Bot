@@ -495,6 +495,22 @@ class QueueChannel:
 			and not (self.cfg.lb_min_matches and self.cfg.lb_min_matches > sum((i['wins'], i['losses'], i['draws'])))
 		]
 
+	async def get_season_lb(self):
+		"""Get leaderboard with strict 20 games minimum requirement"""
+		now = int(time())
+		data = await db.select(
+			['user_id', 'nick', 'rating', 'deviation', 'wins', 'losses', 'draws', 'streak', 'is_hidden', 'last_ranked_match_at'],
+			'qc_players',
+			where={'channel_id': self.rating.channel_id}, order_by="rating"
+		)
+		return [
+			i for i in data
+			if i['rating'] is not None
+			and not i['is_hidden']
+			and sum((i['wins'], i['losses'], i['draws'])) >= 20  # Fixed 20 game minimum
+			and (not self.cfg.lb_last_match_limit or ((i['last_ranked_match_at'] or 0) + self.cfg.lb_last_match_limit > now))
+		]
+
 	async def update_rating_roles(self, *members):
 		asyncio.create_task(self._update_rating_roles(*members))
 

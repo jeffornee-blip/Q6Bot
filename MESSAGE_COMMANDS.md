@@ -22,7 +22,8 @@
 |-----------------|-----------------------|-----------------------------------------------------------|
 | !who            | [`queue`]               | Show people in specified queue                            |
 | !rank           | [`@user`]               | Show ranking for the specified user                       |
-| !lb             | [`page #`]              | Show the leaderboard page specified                       |
+| !lb             | [`page #`]              | Show the leaderboard page specified (top 12)              |
+| !slb            | [`page #`]              | Show the season leaderboard (players with 20+ games)      |
 | !expire         |                       | Show your current expire timer                            |
 | !matches        |                       | Show active matches on the channel                        |
 | !lastgame / !lg | [`queue` / `@user`]         | Show last match played                                    |

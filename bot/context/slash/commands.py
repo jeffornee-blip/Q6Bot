@@ -634,6 +634,13 @@ async def _leaderboard(
 ): await run_slash(bot.commands.leaderboard, interaction=interaction, page=page)
 
 
+@dc.slash_command(name='season_leaderboard', description='Show top players with 20+ games.', **guild_kwargs)
+async def _season_leaderboard(
+		interaction: Interaction,
+		page: int = SlashOption(required=False),
+): await run_slash(bot.commands.season_leaderboard, interaction=interaction, page=page)
+
+
 @groups.admin_rating.subcommand(name='unhide_player', description='Unhide player from the leaderboard.')
 async def _rating_unhide(
 		interaction: Interaction,

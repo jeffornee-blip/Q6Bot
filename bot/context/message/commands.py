@@ -214,6 +214,12 @@ async def _leaderboard(ctx: MessageContext, args: str = None):
 	await bot.commands.leaderboard(ctx, page=page)
 
 
+@message_command('season_leaderboard', 'slb')
+async def _season_leaderboard(ctx: MessageContext, args: str = None):
+	page = int(args) if args else None
+	await bot.commands.season_leaderboard(ctx, page=page)
+
+
 @message_command('lastgame', 'lg')
 async def _lastgame(ctx: MessageContext, args: str = None):
 	""" Guess parameter name on the supplied value type :peka5: """

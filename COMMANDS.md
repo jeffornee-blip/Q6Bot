@@ -37,7 +37,8 @@
 #### Stats
 | command               | description                                             |
 |-----------------------|---------------------------------------------------------|
-| /leaderboard          | Show rating leaderboard                                 |
+| /leaderboard          | Show rating leaderboard (top 12)                        |
+| /season_leaderboard   | Show rating leaderboard for players with 20+ games      |
 | /rank                 | Show your or another player's rating stats              |
 | /lastgame             | Show last played match                                  |
 | /top                  | Show top active players on the channel                  |
