@@ -64,7 +64,7 @@ def save_state():
 		matches.append(match.serialize())
 
 	f = open("saved_state.json", 'w')
-	f.write(json.dumps(dict(queues=queues, matches=matches, allow_offline=bot.allow_offline, expire=bot.expire.serialize())))
+	f.write(json.dumps(dict(queues=queues, matches=matches, allow_offline=bot.allow_offline, expire=bot.expire.serialize(), countdown_channel_id=bot.scheduler.countdown_channel_id)))
 	f.close()
 
 
@@ -97,6 +97,10 @@ async def load_state():
 
 	if 'expire' in data.keys():
 		await bot.expire.load_json(data['expire'])
+
+	if 'countdown_channel_id' in data.keys():
+		bot.scheduler.countdown_channel_id = data['countdown_channel_id']
+		log.info(f"Countdown channel loaded: {bot.scheduler.countdown_channel_id}")
 
 
 async def remove_players(*users, reason=None):
