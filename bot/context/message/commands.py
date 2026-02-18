@@ -289,3 +289,32 @@ async def _rating_unhide(ctx: MessageContext, args: str = None):
 		raise bot.Exc.SyntaxError(f"Usage: {ctx.qc.cfg.prefix}rating_unhide_player __@player__")
 
 	await bot.commands.rating_hide(ctx, player=args, hide=False)
+
+
+@message_command('set_countdown_channel')
+async def _set_countdown_channel(ctx: MessageContext, args: str = None):
+	if not args:
+		raise bot.Exc.SyntaxError(f"Usage: {ctx.qc.cfg.prefix}set_countdown_channel #channel")
+	
+	# Parse channel from mention or ID
+	channel_str = args.strip()
+	channel = None
+	
+	# Try to find channel by mention or ID
+	if channel_str.startswith('<#') and channel_str.endswith('>'):
+		# Channel mention format: <#ID>
+		channel_id = int(channel_str[2:-1])
+		channel = ctx.channel.guild.get_channel(channel_id)
+	else:
+		# Try as direct ID
+		try:
+			channel_id = int(channel_str)
+			channel = ctx.channel.guild.get_channel(channel_id)
+		except ValueError:
+			# Try by name
+			channel = next((c for c in ctx.channel.guild.text_channels if c.name == channel_str.lstrip('#')), None)
+	
+	if not channel:
+		raise bot.Exc.ValueError(f"Channel '{args}' not found.")
+	
+	await bot.commands.set_countdown_channel(ctx, channel)

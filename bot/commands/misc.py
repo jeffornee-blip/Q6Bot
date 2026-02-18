@@ -159,8 +159,8 @@ async def set_nick(ctx, nick: str):
 async def set_countdown_channel(ctx, channel):
 	"""Set the channel for hourly countdown messages"""
 	if not (ctx.author.id == cfg.DC_OWNER_ID or ctx.channel.permissions_for(ctx.author).administrator):
-		raise ctx.Exc.PermissionError(ctx.qc.gt("You need administrator permissions to use this command."))
+		raise bot.Exc.PermissionError("You need administrator permissions to use this command.")
 	
 	bot.scheduler.countdown_channel_id = channel.id
-	await ctx.success(f"Countdown channel set to {channel.mention}")
+	await ctx.reply(f"✅ Countdown channel set to {channel.mention}")
 
