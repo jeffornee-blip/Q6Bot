@@ -11,6 +11,7 @@ import bot
 @dc.event
 async def on_init():
 	await bot.stats.check_match_id_counter()
+	bot.scheduler.start()
 
 
 @dc.event
