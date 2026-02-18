@@ -1,4 +1,4 @@
-__all__ = ['auto_ready', 'expire', 'default_expire', 'allow_offline', 'switch_dms', 'cointoss', 'show_help', 'set_nick']
+__all__ = ['auto_ready', 'expire', 'default_expire', 'allow_offline', 'switch_dms', 'cointoss', 'show_help', 'set_nick', 'set_countdown_channel']
 
 from time import time
 from datetime import timedelta
@@ -154,3 +154,13 @@ async def set_nick(ctx, nick: str):
 
 	await ctx.author.edit(nick=f"[{rating}] " + nick)
 	await ctx.ignore(ctx.qc.gt("Done."))
+
+
+async def set_countdown_channel(ctx, channel):
+	"""Set the channel for hourly countdown messages"""
+	if not (ctx.author.id == cfg.DC_OWNER_ID or ctx.channel.permissions_for(ctx.author).administrator):
+		raise ctx.Exc.PermissionError(ctx.qc.gt("You need administrator permissions to use this command."))
+	
+	bot.scheduler.countdown_channel_id = channel.id
+	await ctx.success(f"Countdown channel set to {channel.mention}")
+
