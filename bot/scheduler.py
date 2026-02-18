@@ -16,6 +16,7 @@ class Scheduler:
 	def __init__(self):
 		self.countdown_channel_id = None  # Set this to your Discord channel ID
 		self.countdown_message = None
+		self.safe_to_queue_message = None
 		self.countdown_end_time = None
 		self.last_triggered_minute = None
 		self.timer_task = None
@@ -78,6 +79,15 @@ class Scheduler:
 		"""Send initial countdown message at :32"""
 		if not self.countdown_channel_id:
 			return
+		
+		# Delete previous safe to queue message if it exists
+		if self.safe_to_queue_message:
+			try:
+				await self.safe_to_queue_message.delete()
+				log.info("Deleted previous safe to queue message")
+			except Exception as e:
+				log.error(f"Failed to delete previous safe to queue message: {e}")
+			self.safe_to_queue_message = None
 			
 		channel = dc.get_channel(self.countdown_channel_id)
 		if not channel:
@@ -141,6 +151,15 @@ class Scheduler:
 		if not self.countdown_channel_id:
 			return
 		
+		# Delete the countdown message if it exists
+		if self.countdown_message:
+			try:
+				await self.countdown_message.delete()
+				log.info("Deleted countdown message")
+			except Exception as e:
+				log.error(f"Failed to delete countdown message: {e}")
+			self.countdown_message = None
+		
 		channel = dc.get_channel(self.countdown_channel_id)
 		if not channel:
 			log.error(f"Could not find countdown channel with ID {self.countdown_channel_id}")
@@ -152,7 +171,8 @@ class Scheduler:
 				description="Good luck, Have fun!",
 				color=Color.green()
 			)
-			await channel.send(embed=embed)
+			message = await channel.send(embed=embed)
+			self.safe_to_queue_message = message
 			log.info("Safe to queue message sent")
 		except Exception as e:
 			log.error(f"Failed to send safe to queue message: {e}")
