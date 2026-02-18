@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 from datetime import datetime
+from nextcord import Embed, Color
 from core.client import dc
 from core.console import log
 
@@ -57,7 +58,12 @@ class Scheduler:
 
 		try:
 			self.countdown_end_time = time.time() + (10 * 60)  # 10 minutes
-			message = await channel.send("🔔 **10-Minute Countdown Starts!** 🔔\n⏱️ 10:00 remaining")
+			embed = Embed(
+				title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
+				description="Time Remaining: 10:00",
+				color=Color.orange()
+			)
+			message = await channel.send(embed=embed)
 			self.countdown_message = message
 			log.info(f"Countdown started in channel {channel.name} (#{self.countdown_channel_id})")
 		except Exception as e:
@@ -72,9 +78,12 @@ class Scheduler:
 		seconds = int(seconds_remaining) % 60
 
 		try:
-			await self.countdown_message.edit(
-				content=f"🔔 **Countdown** 🔔\n⏱️ {minutes}:{seconds:02d} remaining"
+			embed = Embed(
+				title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
+				description=f"Time Remaining: {minutes}:{seconds:02d}",
+				color=Color.orange()
 			)
+			await self.countdown_message.edit(embed=embed)
 		except Exception as e:
 			log.error(f"Failed to update countdown: {e}")
 			self.countdown_message = None
@@ -83,7 +92,12 @@ class Scheduler:
 		"""Called when countdown expires"""
 		if self.countdown_message:
 			try:
-				await self.countdown_message.edit(content="✅ **Countdown Complete!**")
+				embed = Embed(
+					title="✅ 42 Alert - Safe to Queue ✅",
+					description="Good luck, Have fun!",
+					color=Color.green()
+				)
+				await self.countdown_message.edit(embed=embed)
 				log.info("Countdown completed")
 			except Exception as e:
 				log.error(f"Failed to finalize countdown: {e}")
