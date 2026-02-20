@@ -108,7 +108,7 @@ class Scheduler:
 			log.error(f"Failed to send countdown message: {e}")
 
 	async def update_countdown(self, seconds_remaining):
-		"""Update countdown message in place"""
+		"""Update countdown message by deleting old and sending new one"""
 		if not self.countdown_message:
 			return
 
@@ -116,12 +116,23 @@ class Scheduler:
 		seconds = int(seconds_remaining) % 60
 
 		try:
+			# Delete old message
+			await self.countdown_message.delete()
+			
+			# Send new message with updated time
+			channel = dc.get_channel(self.countdown_channel_id)
+			if not channel:
+				log.error(f"Could not find countdown channel with ID {self.countdown_channel_id}")
+				self.countdown_message = None
+				return
+			
 			embed = Embed(
 				title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
 				description=f"Time Remaining: {minutes}:{seconds:02d}",
 				color=Color.orange()
 			)
-			await self.countdown_message.edit(embed=embed)
+			message = await channel.send(embed=embed)
+			self.countdown_message = message
 		except Exception as e:
 			log.error(f"Failed to update countdown: {e}")
 			self.countdown_message = None
