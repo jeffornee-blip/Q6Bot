@@ -17,7 +17,7 @@ class Scheduler:
 		self.countdown_channel_id = None  # Set this to your Discord channel ID
 		self.countdown_message = None
 		self.safe_to_queue_message = None
-		self.countdown_end_time = None
+		self.countdown_active = False  # Track if we're in the countdown period
 		self.last_triggered_minute = None
 		self.timer_task = None
 
@@ -28,29 +28,23 @@ class Scheduler:
 			log.info("Countdown scheduler timer started")
 
 	async def _timer_loop(self):
-		"""Dedicated task that triggers at exact :32 mark every hour"""
+		"""Dedicated task that triggers at exact :33 mark to start countdown and :42 to end"""
 		while True:
 			try:
-				# Calculate seconds until next :32 mark
 				now = datetime.now()
-				target_minute = 32
+				current_minute = now.minute
 				
-				# If we're at or past :32, target the next hour's :32
-				if now.minute >= target_minute:
-					# Calculate seconds until next hour's :32
-					seconds_until_next_hour = 60 - now.second + (59 - now.minute) * 60
-					sleep_seconds = seconds_until_next_hour + (target_minute * 60)
-				else:
-					# Calculate seconds until this hour's :32
-					minutes_left = target_minute - now.minute
-					seconds_left = minutes_left * 60 - now.second
-					sleep_seconds = seconds_left
+				# Check if we need to start countdown at :33
+				if current_minute == 33:
+					if not self.countdown_active:
+						await self.start_countdown()
+				# Check if we need to end countdown at :42
+				elif current_minute == 42:
+					if self.countdown_active:
+						await self.end_countdown()
 				
-				log.info(f"Countdown timer waiting {sleep_seconds}s until next :32 mark")
-				await asyncio.sleep(sleep_seconds)
-				
-				# Trigger the countdown
-				await self.start_countdown()
+				# Sleep for 10 seconds and check again
+				await asyncio.sleep(10)
 				
 			except Exception as e:
 				log.error(f"Error in countdown timer loop: {e}")
@@ -59,24 +53,11 @@ class Scheduler:
 
 	async def think(self, frame_time):
 		"""Called every ~1 second from the main event loop"""
-		if not self.countdown_channel_id:
-			return
-
-		# Update countdown every 10 seconds if active
-		if self.countdown_message and self.countdown_end_time:
-			time_remaining = self.countdown_end_time - frame_time
-			if time_remaining > 0:
-				# Only update approximately every 10 seconds
-				if not hasattr(self, '_last_update_time'):
-					self._last_update_time = frame_time
-				if frame_time - self._last_update_time >= 10:
-					await self.update_countdown(time_remaining)
-					self._last_update_time = frame_time
-			else:
-				await self.end_countdown()
+		# Currently unused - countdown messages are now managed by timer and message events
+		pass
 
 	async def start_countdown(self):
-		"""Send initial countdown message at :32"""
+		"""Send the 41 Alert at :33"""
 		if not self.countdown_channel_id:
 			return
 		
@@ -95,72 +76,47 @@ class Scheduler:
 			return
 
 		try:
-			self.countdown_end_time = time.time() + (10 * 60)  # 10 minutes
+			self.countdown_active = True
 			embed = Embed(
 				title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
-				description="Time Remaining: 10:00",
 				color=Color.orange()
 			)
 			message = await channel.send(embed=embed)
 			self.countdown_message = message
-			log.info(f"Countdown started in channel {channel.name} (#{self.countdown_channel_id})")
+			log.info(f"41 Alert started in channel {channel.name} (#{self.countdown_channel_id})")
 		except Exception as e:
 			log.error(f"Failed to send countdown message: {e}")
 
-	async def update_countdown(self, seconds_remaining):
-		"""Update countdown message by deleting old and sending new one"""
-		if not self.countdown_message:
+	async def resend_alert_if_active(self):
+		"""Resend the 41 Alert to keep it at the bottom if countdown is active"""
+		if not self.countdown_active or not self.countdown_channel_id:
 			return
 
-		minutes = int(seconds_remaining) // 60
-		seconds = int(seconds_remaining) % 60
+		channel = dc.get_channel(self.countdown_channel_id)
+		if not channel:
+			return
 
 		try:
-			# Delete old message
-			await self.countdown_message.delete()
+			# Delete old message if it exists
+			if self.countdown_message:
+				try:
+					await self.countdown_message.delete()
+				except Exception as e:
+					log.error(f"Failed to delete old countdown message: {e}")
 			
-			# Send new message with updated time
-			channel = dc.get_channel(self.countdown_channel_id)
-			if not channel:
-				log.error(f"Could not find countdown channel with ID {self.countdown_channel_id}")
-				self.countdown_message = None
-				return
-			
+			# Send new message to keep it at bottom
 			embed = Embed(
 				title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
-				description=f"Time Remaining: {minutes}:{seconds:02d}",
 				color=Color.orange()
 			)
 			message = await channel.send(embed=embed)
 			self.countdown_message = message
 		except Exception as e:
-			log.error(f"Failed to update countdown: {e}")
-			self.countdown_message = None
+			log.error(f"Failed to resend countdown alert: {e}")
 
 	async def end_countdown(self):
-		"""Called when countdown expires - update timer to 00:00 and send safe to queue message"""
-		if self.countdown_message:
-			try:
-				embed = Embed(
-					title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
-					description="Time Remaining: 00:00",
-					color=Color.orange()
-				)
-				await self.countdown_message.edit(embed=embed)
-				log.info("Countdown timer ended at 00:00")
-			except Exception as e:
-				log.error(f"Failed to finalize countdown timer: {e}")
-		
-		# Send separate safe to queue message
-		await self.send_safe_to_queue_message()
-		
-		self.countdown_message = None
-		self.countdown_end_time = None
-
-	async def send_safe_to_queue_message(self):
-		"""Send the safe to queue message at :42"""
-		if not self.countdown_channel_id:
-			return
+		"""Called at :42 to end the countdown and send safe to queue message"""
+		self.countdown_active = False
 		
 		# Delete the countdown message if it exists
 		if self.countdown_message:
@@ -170,6 +126,14 @@ class Scheduler:
 			except Exception as e:
 				log.error(f"Failed to delete countdown message: {e}")
 			self.countdown_message = None
+		
+		# Send safe to queue message
+		await self.send_safe_to_queue_message()
+
+	async def send_safe_to_queue_message(self):
+		"""Send the safe to queue message at :42"""
+		if not self.countdown_channel_id:
+			return
 		
 		channel = dc.get_channel(self.countdown_channel_id)
 		if not channel:

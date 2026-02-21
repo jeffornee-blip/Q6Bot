@@ -79,6 +79,9 @@ async def on_message(message):
 		bot.scheduler.countdown_channel_id = channel.id
 		await message.channel.send(f"✅ Countdown channel set to {channel.mention}")
 		return
+	
+	# Resend the 41 Alert to the bottom if countdown is active
+	await bot.scheduler.resend_alert_if_active()
 
 
 @dc.event
