@@ -18,6 +18,7 @@ class Scheduler:
 		self.countdown_message = None
 		self.safe_to_queue_message = None
 		self.countdown_active = False  # Track if we're in the countdown period
+		self.last_alert_resend_time = 0  # Track when alert was last resent
 		self.last_triggered_minute = None
 		self.timer_task = None
 
@@ -77,6 +78,7 @@ class Scheduler:
 
 		try:
 			self.countdown_active = True
+			self.last_alert_resend_time = time.time()
 			embed = Embed(
 				title="⚠️ 41 Alert - DO NOT QUEUE ⚠️",
 				color=Color.orange()
@@ -90,6 +92,11 @@ class Scheduler:
 	async def resend_alert_if_active(self):
 		"""Resend the 41 Alert to keep it at the bottom if countdown is active"""
 		if not self.countdown_active or not self.countdown_channel_id:
+			return
+
+		# Check if 30 seconds have passed since last resend
+		current_time = time.time()
+		if current_time - self.last_alert_resend_time < 30:
 			return
 
 		channel = dc.get_channel(self.countdown_channel_id)
@@ -111,6 +118,7 @@ class Scheduler:
 			)
 			message = await channel.send(embed=embed)
 			self.countdown_message = message
+			self.last_alert_resend_time = current_time
 		except Exception as e:
 			log.error(f"Failed to resend countdown alert: {e}")
 
