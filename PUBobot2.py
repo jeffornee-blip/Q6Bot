@@ -3,6 +3,7 @@
 
 """
 Minimal startup - import only what's necessary
+Retry: Fresh build attempt
 """
 
 import sys
