@@ -31,4 +31,5 @@ echo ""
 echo "=========================================="
 echo "Starting Q6Bot..."
 echo "=========================================="
+export PYTHONUNBUFFERED=1
 exec python PUBobot2.py

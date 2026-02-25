@@ -14,9 +14,12 @@ from asyncio import iscoroutine
 print("=" * 60)
 print("PUBobot2 Starting...")
 print("=" * 60)
+print("[STARTUP] Output buffering: ENABLED - Use PYTHONUNBUFFERED=1 for real-time logs")
+sys.stdout.flush()
 
 # Check environment variables before loading anything
 print("\n[STARTUP] Checking environment variables...")
+sys.stdout.flush()
 required_vars = ['DC_BOT_TOKEN', 'DATABASE_URL']
 missing_vars = []
 for var in required_vars:
@@ -25,42 +28,76 @@ for var in required_vars:
 	else:
 		print(f"✗ {var} is NOT set")
 		missing_vars.append(var)
+	sys.stdout.flush()
 
 if missing_vars:
 	print(f"\n[ERROR] Missing required environment variables: {', '.join(missing_vars)}")
 	print("Cannot start bot without these variables!")
+	sys.stdout.flush()
 	sys.exit(1)
 
 print("\n[STARTUP] Loading bot core modules...")
+sys.stdout.flush()
 try:
 	# Load bot core
 	from core import config, console, database, locales, cfg_factory
 	from core.client import dc
 	print("[STARTUP] ✓ Core modules loaded")
+	sys.stdout.flush()
 except Exception as e:
 	print(f"[ERROR] Failed to load core modules: {e}")
 	traceback.print_exc()
+	sys.stdout.flush()
 	sys.exit(1)
 
 print("[STARTUP] Connecting to database...")
+sys.stdout.flush()
 loop = asyncio.get_event_loop()
-try:
-	loop.run_until_complete(database.db.connect())
-	print("[STARTUP] ✓ Database connected")
-except Exception as e:
-	print(f"[ERROR] Failed to connect to database: {e}")
-	print(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}")
-	traceback.print_exc()
-	sys.exit(1)
+connection_attempts = 0
+max_attempts = 3
+while connection_attempts < max_attempts:
+	connection_attempts += 1
+	try:
+		print(f"[STARTUP] Database connection attempt {connection_attempts}/{max_attempts}...")
+		sys.stdout.flush()
+		loop.run_until_complete(database.db.connect())
+		print("[STARTUP] ✓ Database connected")
+		sys.stdout.flush()
+		break
+	except asyncio.TimeoutError:
+		print(f"[WARNING] Database connection timeout on attempt {connection_attempts}/{max_attempts}")
+		sys.stdout.flush()
+		if connection_attempts >= max_attempts:
+			print(f"[ERROR] Failed to connect to database after {max_attempts} attempts: Timeout")
+			print(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}")
+			sys.stdout.flush()
+			sys.exit(1)
+	except Exception as e:
+		print(f"[WARNING] Database connection error on attempt {connection_attempts}/{max_attempts}: {e}")
+		sys.stdout.flush()
+		if connection_attempts >= max_attempts:
+			print(f"[ERROR] Failed to connect to database: {e}")
+			print(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}")
+			traceback.print_exc()
+			sys.stdout.flush()
+			sys.exit(1)
+	
+	if connection_attempts < max_attempts:
+		print("[STARTUP] Retrying in 2 seconds...")
+		sys.stdout.flush()
+		time.sleep(2)
 
 print("[STARTUP] Loading bot...")
+sys.stdout.flush()
 try:
 	# Load bot
 	import bot
 	print("[STARTUP] ✓ Bot loaded")
+	sys.stdout.flush()
 except Exception as e:
 	print(f"[ERROR] Failed to load bot: {e}")
 	traceback.print_exc()
+	sys.stdout.flush()
 	sys.exit(1)
 
 # Load web server
@@ -81,6 +118,8 @@ log = console.log
 log.info("=" * 60)
 log.info("PUBobot2 Started Successfully")
 log.info("=" * 60)
+print("[STARTUP] ✓ All startup checks complete. Bot is starting Discord connection...")
+sys.stdout.flush()
 original_SIGINT_handler = signal.getsignal(signal.SIGINT)
 
 
