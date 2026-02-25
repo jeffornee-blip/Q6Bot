@@ -1,26 +1,69 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# WRITE TO FILE BEFORE ANY IMPORTS - this MUST succeed
-with open('startup_trace.txt', 'a') as f:
-	f.write("=== Python script execution started ===\n")
-	f.flush()
+# ============================================================================
+# DIAGNOSTIC MODE - writes to multiple outputs to debug Railway deployment
+# ============================================================================
 
 import sys
+import os
 
-# ABSOLUTE FIRST THING: write to log file that we started
+# Create a comprehensive startup trace file
+TRACE_FILE = "startup.trace"
+
+def trace(msg):
+    """Write message to our trace file"""
+    try:
+        with open(TRACE_FILE, 'a') as f:
+            f.write(msg + "\n")
+            f.flush()
+    except:
+        pass
+
+# Start tracing immediately
+trace("=== PUBOBOT2 STARTUP TRACE ===")
+trace(f"Python version: {sys.version}")
+trace(f"Executable: {sys.executable}")
+trace(f"Working directory: {os.getcwd()}")
+trace("")
+
+# Also write to actual stdout/stderr
+print("PUBOBOT2: Starting", flush=True)
+sys.stderr.write("PUBOBOT2: Starting\n")
+sys.stderr.flush()
+
+# Now do the actual imports
+try:
+    trace("Importing core modules...")
+    import time
+    import signal
+    import asyncio
+    import traceback
+    import queue
+    from asyncio import sleep as asleep
+    from asyncio import iscoroutine
+    trace("Core imports complete")
+    
+    # WRITE TO FILE BEFORE LOADING BOT MODULES
+    trace("Starting config loading...")
+except Exception as e:
+    trace(f"ERROR during imports: {e}")
+    trace(traceback.format_exc())
+    raise
+
+# Rest of the original startup code begins...
 log_file = None
 try:
-	log_file = open('/tmp/pubobot.log', 'w')
-	log_file.write("=== PUBobot2 Startup Log ===\n")
-	log_file.flush()
+    log_file = open('/tmp/pubobot.log', 'w')
+    log_file.write("=== PUBobot2 Startup Log ===\n")
+    log_file.flush()
 except:
-	try:
-		log_file = open('pubobot_startup.log', 'w')
-		log_file.write("=== PUBobot2 Startup Log ===\n")
-		log_file.flush()
-	except:
-		log_file = None
+    try:
+        log_file = open('pubobot_startup.log', 'w')
+        log_file.write("=== PUBobot2 Startup Log ===\n")
+        log_file.flush()
+    except:
+        log_file = None
 
 def log_msg(msg):
 	"""Write to all available output streams"""
@@ -33,9 +76,7 @@ def log_msg(msg):
 	if log_file:
 		log_file.write(formatted_msg + "\n")
 		log_file.flush()
-	with open('startup_trace.txt', 'a') as f:
-		f.write(formatted_msg + "\n")
-		f.flush()
+	trace(formatted_msg)
 
 log_msg("PYTHON_PROCESS_STARTED")
 
@@ -44,15 +85,6 @@ sys.stderr.write("PYTHON_STARTED_STDERR\n")
 sys.stderr.flush()
 
 try:
-	import time
-	import signal
-	import asyncio
-	import traceback
-	import queue
-	import os
-	from asyncio import sleep as asleep
-	from asyncio import iscoroutine
-	
 	log_msg("IMPORTS_COMPLETE")
 	
 	# IMMEDIATE STARTUP DEBUG - write to multiple outputs to ensure we see something
@@ -183,6 +215,7 @@ except Exception as e:
 		log_file.write(msg + "\n")
 		log_file.flush()
 		log_file.close()
+	trace(msg)
 	sys.exit(1)
 
 # Now setup signal handlers and event loop
