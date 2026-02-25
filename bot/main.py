@@ -115,19 +115,31 @@ async def expire_auto_ready(frame_time):
 
 
 async def initialize_factories():
-	"""Initialize all database FactoryTable instances after database connection.
+	"""Initialize all database FactoryTable instances and stat tables after database connection.
 	This must be called after database.connect() to avoid hanging on module import."""
-	log.info("Initializing database factory tables...")
+	log.info("Initializing database tables...")
 	try:
+		# Initialize stats tables
+		log.info("  Initializing stats tables...")
+		await bot.stats.ensure_tables()
+		log.info("  ✓ Stats tables initialized")
+		
+		# Initialize noadds tables
+		log.info("  Initializing noadds tables...")
+		await bot.noadds.ensure_tables()
+		log.info("  ✓ Noadds tables initialized")
+		
 		# Initialize QueueChannel factory
+		log.info("  Initializing QueueChannel factory...")
 		await bot.QueueChannel.cfg_factory.table.initialize()
 		log.info("  ✓ QueueChannel factory initialized")
 		
 		# Initialize PickupQueue factory
+		log.info("  Initializing PickupQueue factory...")
 		await bot.PickupQueue.cfg_factory.table.initialize()
 		log.info("  ✓ PickupQueue factory initialized")
 		
-		log.info("All factory tables initialized successfully")
+		log.info("All database initialization complete")
 	except Exception as e:
-		log.error(f"Error initializing factory tables: {e}\n{traceback.format_exc()}")
+		log.error(f"Error initializing database tables: {e}\n{traceback.format_exc()}")
 		raise

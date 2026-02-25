@@ -4,31 +4,35 @@ from random import choice
 from core.database import db
 from core.utils import get_nick
 
-db.ensure_table(dict(
-	tname="noadds",
-	columns=[
-		dict(cname="id", ctype=db.types.int, autoincrement=True),
-		dict(cname="guild_id", ctype=db.types.int),
-		dict(cname="user_id", ctype=db.types.int),
-		dict(cname="name", ctype=db.types.str),
-		dict(cname="is_active", ctype=db.types.bool, default=1),
-		dict(cname="at", ctype=db.types.int),
-		dict(cname="duration", ctype=db.types.int),
-		dict(cname="reason", ctype=db.types.text),
-		dict(cname="by", ctype=db.types.str),
-		dict(cname="released_by", ctype=db.types.str)
-	],
-	primary_keys=["id"]
-))
+# Database table definitions deferred to initialization to avoid blocking at import
+async def ensure_tables():
+	"""Initialize database tables for noadds module"""
+	
+	db.ensure_table(dict(
+		tname="noadds",
+		columns=[
+			dict(cname="id", ctype=db.types.int, autoincrement=True),
+			dict(cname="guild_id", ctype=db.types.int),
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="name", ctype=db.types.str),
+			dict(cname="is_active", ctype=db.types.bool, default=1),
+			dict(cname="at", ctype=db.types.int),
+			dict(cname="duration", ctype=db.types.int),
+			dict(cname="reason", ctype=db.types.text),
+			dict(cname="by", ctype=db.types.str),
+			dict(cname="released_by", ctype=db.types.str)
+		],
+		primary_keys=["id"]
+	))
 
-db.ensure_table(dict(
-	tname="qc_phrases",
-	columns=[
-		dict(cname="channel_id", ctype=db.types.int),
-		dict(cname="user_id", ctype=db.types.int),
-		dict(cname="phrase", ctype=db.types.text),
-	]
-))
+	db.ensure_table(dict(
+		tname="qc_phrases",
+		columns=[
+			dict(cname="channel_id", ctype=db.types.int),
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="phrase", ctype=db.types.text),
+		]
+	))
 
 
 class NoAdds:

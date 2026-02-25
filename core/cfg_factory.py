@@ -63,15 +63,32 @@ class FactoryTable:
 		self.p_key = p_key
 		self.f_key = f_key
 		self._initialized = False
+		
+		# Store parameters for deferred table definition
+		# Don't access db.types yet - database may not be initialized
+		self._table_params = {
+			'name': name,
+			'p_key': p_key,
+			'f_key': f_key
+		}
+		self.table_def = None
 
-		# Store table definition but DON'T try to create it yet
-		# (database may not be connected during module import)
+	def _build_table_def(self):
+		"""Build the table definition using database types (deferred from __init__)"""
+		if self.table_def is not None:
+			return
+		
+		# Now it's safe to access db.types since database is initialized
+		name = self._table_params['name']
+		p_key = self._table_params['p_key']
+		f_key = self._table_params['f_key']
+		
 		keys = [dict(cname=p_key, ctype=db.types.int, notnull=True, autoincrement=True)]
 		if f_key:
 			keys.append(dict(cname=f_key, ctype=db.types.int))
 
 		self.table_def = dict(
-			tname=self.name,
+			tname=name,
 			columns=[
 				*keys,
 				dict(cname='factory_version', ctype=db.types.int),
@@ -79,13 +96,16 @@ class FactoryTable:
 				dict(cname='cfg_info', ctype=db.types.text),
 				dict(cname='cfg_data', ctype=db.types.dict)
 			],
-			primary_keys=[self.p_key]
+			primary_keys=[p_key]
 		)
 
 	async def initialize(self) -> None:
 		""" Initialize the database table - call this after database connection """
 		if self._initialized:
 			return
+		
+		# Build table definition now that database is ready
+		self._build_table_def()
 		
 		# Call the async _ensure_table directly instead of ensure_table 
 		# to avoid run_until_complete issues when called from async context

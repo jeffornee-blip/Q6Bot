@@ -7,97 +7,103 @@ from core.console import log
 from core.database import db
 from core.utils import iter_to_dict, find, get_nick
 
-db.ensure_table(dict(
-	tname="players",
-	columns=[
-		dict(cname="user_id", ctype=db.types.int),
-		dict(cname="name", ctype=db.types.str),
-		dict(cname="allow_dm", ctype=db.types.bool),
-		dict(cname="expire", ctype=db.types.int)
-	],
-	primary_keys=["user_id"]
-))
+# All database table definitions are deferred to initialization
+# to avoid blocking at module import time
 
-db.ensure_table(dict(
-	tname="qc_players",
-	columns=[
-		dict(cname="channel_id", ctype=db.types.int),
-		dict(cname="user_id", ctype=db.types.int),
-		dict(cname="nick", ctype=db.types.str),
-		dict(cname="is_hidden", ctype=db.types.bool, default=0),
-		dict(cname="rating", ctype=db.types.int),
-		dict(cname="deviation", ctype=db.types.int),
-		dict(cname="wins", ctype=db.types.int, notnull=True, default=0),
-		dict(cname="losses", ctype=db.types.int, notnull=True, default=0),
-		dict(cname="draws", ctype=db.types.int, notnull=True, default=0),
-		dict(cname="streak", ctype=db.types.int, notnull=True, default=0),
-		dict(cname="last_ranked_match_at", ctype=db.types.int, notnull=False)
-	],
-	primary_keys=["user_id", "channel_id"]
-))
+async def ensure_tables():
+	"""Initialize all database tables needed for stats module"""
+	
+	db.ensure_table(dict(
+		tname="players",
+		columns=[
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="name", ctype=db.types.str),
+			dict(cname="allow_dm", ctype=db.types.bool),
+			dict(cname="expire", ctype=db.types.int)
+		],
+		primary_keys=["user_id"]
+	))
 
-db.ensure_table(dict(
-	tname="qc_rating_history",
-	columns=[
-		dict(cname="id", ctype=db.types.int, autoincrement=True),
-		dict(cname="channel_id", ctype=db.types.int),
-		dict(cname="user_id", ctype=db.types.int),
-		dict(cname="at", ctype=db.types.int),
-		dict(cname="rating_before", ctype=db.types.int),
-		dict(cname="rating_change", ctype=db.types.int),
-		dict(cname="deviation_before", ctype=db.types.int),
-		dict(cname="deviation_change", ctype=db.types.int),
-		dict(cname="match_id", ctype=db.types.int),
-		dict(cname="reason", ctype=db.types.str)
-	],
-	primary_keys=["id"]
-))
+	db.ensure_table(dict(
+		tname="qc_players",
+		columns=[
+			dict(cname="channel_id", ctype=db.types.int),
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="nick", ctype=db.types.str),
+			dict(cname="is_hidden", ctype=db.types.bool, default=0),
+			dict(cname="rating", ctype=db.types.int),
+			dict(cname="deviation", ctype=db.types.int),
+			dict(cname="wins", ctype=db.types.int, notnull=True, default=0),
+			dict(cname="losses", ctype=db.types.int, notnull=True, default=0),
+			dict(cname="draws", ctype=db.types.int, notnull=True, default=0),
+			dict(cname="streak", ctype=db.types.int, notnull=True, default=0),
+			dict(cname="last_ranked_match_at", ctype=db.types.int, notnull=False)
+		],
+		primary_keys=["user_id", "channel_id"]
+	))
 
-db.ensure_table(dict(
-	tname="qc_matches",
-	columns=[
-		dict(cname="match_id", ctype=db.types.int),
-		dict(cname="channel_id", ctype=db.types.int),
-		dict(cname="queue_id", ctype=db.types.int),
-		dict(cname="queue_name", ctype=db.types.str),
-		dict(cname="at", ctype=db.types.int),
-		dict(cname="alpha_name", ctype=db.types.str),
-		dict(cname="beta_name", ctype=db.types.str),
-		dict(cname="ranked", ctype=db.types.bool),
-		dict(cname="winner", ctype=db.types.bool),
-		dict(cname="alpha_score", ctype=db.types.int),
-		dict(cname="beta_score", ctype=db.types.int),
-		dict(cname="maps", ctype=db.types.str)
-	],
-	primary_keys=["match_id"]
-))
+	db.ensure_table(dict(
+		tname="qc_rating_history",
+		columns=[
+			dict(cname="id", ctype=db.types.int, autoincrement=True),
+			dict(cname="channel_id", ctype=db.types.int),
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="at", ctype=db.types.int),
+			dict(cname="rating_before", ctype=db.types.int),
+			dict(cname="rating_change", ctype=db.types.int),
+			dict(cname="deviation_before", ctype=db.types.int),
+			dict(cname="deviation_change", ctype=db.types.int),
+			dict(cname="match_id", ctype=db.types.int),
+			dict(cname="reason", ctype=db.types.str)
+		],
+		primary_keys=["id"]
+	))
 
-db.ensure_table(dict(
-	tname="qc_match_id_counter",
-	columns=[
-		dict(cname="next_id", ctype=db.types.int)
-	]
-))
+	db.ensure_table(dict(
+		tname="qc_matches",
+		columns=[
+			dict(cname="match_id", ctype=db.types.int),
+			dict(cname="channel_id", ctype=db.types.int),
+			dict(cname="queue_id", ctype=db.types.int),
+			dict(cname="queue_name", ctype=db.types.str),
+			dict(cname="at", ctype=db.types.int),
+			dict(cname="alpha_name", ctype=db.types.str),
+			dict(cname="beta_name", ctype=db.types.str),
+			dict(cname="ranked", ctype=db.types.bool),
+			dict(cname="winner", ctype=db.types.bool),
+			dict(cname="alpha_score", ctype=db.types.int),
+			dict(cname="beta_score", ctype=db.types.int),
+			dict(cname="maps", ctype=db.types.str)
+		],
+		primary_keys=["match_id"]
+	))
 
-db.ensure_table(dict(
-	tname="qc_player_matches",
-	columns=[
-		dict(cname="match_id", ctype=db.types.int),
-		dict(cname="channel_id", ctype=db.types.int),
-		dict(cname="user_id", ctype=db.types.int),
-		dict(cname="nick", ctype=db.types.str),
-		dict(cname="team", ctype=db.types.bool)
-	],
-	primary_keys=["match_id", "user_id"]
-))
+	db.ensure_table(dict(
+		tname="qc_match_id_counter",
+		columns=[
+			dict(cname="next_id", ctype=db.types.int)
+		]
+	))
 
-db.ensure_table(dict(
-	tname="disabled_guilds",
-	columns=[
-		dict(cname="guild_id", ctype=db.types.int)
-	],
-	primary_keys=["guild_id"]
-))
+	db.ensure_table(dict(
+		tname="qc_player_matches",
+		columns=[
+			dict(cname="match_id", ctype=db.types.int),
+			dict(cname="channel_id", ctype=db.types.int),
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="nick", ctype=db.types.str),
+			dict(cname="team", ctype=db.types.bool)
+		],
+		primary_keys=["match_id", "user_id"]
+	))
+
+	db.ensure_table(dict(
+		tname="disabled_guilds",
+		columns=[
+			dict(cname="guild_id", ctype=db.types.int)
+		],
+		primary_keys=["guild_id"]
+	))
 
 
 async def check_match_id_counter():

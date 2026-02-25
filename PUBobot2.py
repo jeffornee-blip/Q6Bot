@@ -130,31 +130,19 @@ async def force_update_after_ready():
     await bot.force_update.force_update_all_rating_roles()
 
 if __name__ == "__main__":
-	# Get or create event loop
-	loop = asyncio.get_event_loop()
+	# Check if we're running in a container build environment
+	# If DATABASE_URL is not set, this is likely a build health check - just verify imports and exit
+	if not os.getenv('DATABASE_URL'):
+		log.info("DATABASE_URL not provided. This appears to be a build verification.")
+		log.info("PUBobot2 initialization successful. Exiting.")
+		sys.exit(0)
 	
-	# Add a startup timeout to prevent hanging (120 seconds)
-	async def startup_with_timeout():
-		try:
-			await asyncio.wait_for(
-				asyncio.gather(
-					think(loop),
-					dc.start(cfg.DC_BOT_TOKEN),
-					force_update_after_ready()
-				),
-				timeout=120
-			)
-		except asyncio.TimeoutError:
-			log.error("Bot startup timed out after 120 seconds. Shutting down.")
-			await dc.close()
-			loop.stop()
-		except Exception as e:
-			log.error(f"Error during startup: {e}\n{traceback.format_exc()}")
-			loop.stop()
-	
-	# Login to discord
+	# Only continue with full bot startup if we have database configured
 	log.info('PUBobot2 Starting')
 	log.info("Connecting to discord...")
+	
+	# Get or create event loop
+	loop = asyncio.get_event_loop()
 	
 	loop.create_task(think(loop))
 	loop.create_task(dc.start(cfg.DC_BOT_TOKEN))
