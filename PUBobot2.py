@@ -11,6 +11,20 @@ import os
 from asyncio import sleep as asleep
 from asyncio import iscoroutine
 
+# Debug: Show we started
+print("DEBUG START", flush=True)
+print("DEBUG IMPORTS COMPLETE", flush=True)
+
+# Startup timeout - fail if startup takes too long
+startup_timeout = 30  # seconds
+startup_start_time = time.time()
+
+def check_startup_timeout():
+	elapsed = time.time() - startup_start_time
+	if elapsed > startup_timeout:
+		print(f"[ERROR] Startup timeout! Exceeded {startup_timeout} seconds", flush=True)
+		sys.exit(1)
+
 print("=" * 60)
 print("PUBobot2 Starting...")
 print("=" * 60)
@@ -20,6 +34,7 @@ sys.stdout.flush()
 # Check environment variables before loading anything
 print("\n[STARTUP] Checking environment variables...")
 sys.stdout.flush()
+check_startup_timeout()
 required_vars = ['DC_BOT_TOKEN', 'DATABASE_URL']
 missing_vars = []
 for var in required_vars:
@@ -38,10 +53,51 @@ if missing_vars:
 
 print("\n[STARTUP] Loading bot core modules...")
 sys.stdout.flush()
+check_startup_timeout()
 try:
-	# Load bot core
-	from core import config, console, database, locales, cfg_factory
+	# Load bot core - step by step with debugging
+	print("[STARTUP] Loading config...")
+	sys.stdout.flush()
+	check_startup_timeout()
+	from core import config
+	print("[STARTUP] ✓ config loaded")
+	sys.stdout.flush()
+	
+	print("[STARTUP] Loading console...")
+	sys.stdout.flush()
+	check_startup_timeout()
+	from core import console
+	print("[STARTUP] ✓ console loaded")
+	sys.stdout.flush()
+	
+	print("[STARTUP] Loading database...")
+	sys.stdout.flush()
+	check_startup_timeout()
+	from core import database
+	print("[STARTUP] ✓ database loaded")
+	sys.stdout.flush()
+	
+	print("[STARTUP] Loading locales...")
+	sys.stdout.flush()
+	check_startup_timeout()
+	from core import locales
+	print("[STARTUP] ✓ locales loaded")
+	sys.stdout.flush()
+	
+	print("[STARTUP] Loading cfg_factory...")
+	sys.stdout.flush()
+	check_startup_timeout()
+	from core import cfg_factory
+	print("[STARTUP] ✓ cfg_factory loaded")
+	sys.stdout.flush()
+	
+	print("[STARTUP] Loading Discord client...")
+	sys.stdout.flush()
+	check_startup_timeout()
 	from core.client import dc
+	print("[STARTUP] ✓ Discord client loaded")
+	sys.stdout.flush()
+	
 	print("[STARTUP] ✓ Core modules loaded")
 	sys.stdout.flush()
 except Exception as e:
@@ -52,6 +108,7 @@ except Exception as e:
 
 print("[STARTUP] Connecting to database...")
 sys.stdout.flush()
+check_startup_timeout()
 loop = asyncio.get_event_loop()
 connection_attempts = 0
 max_attempts = 3
@@ -60,6 +117,7 @@ while connection_attempts < max_attempts:
 	try:
 		print(f"[STARTUP] Database connection attempt {connection_attempts}/{max_attempts}...")
 		sys.stdout.flush()
+		check_startup_timeout()
 		loop.run_until_complete(database.db.connect())
 		print("[STARTUP] ✓ Database connected")
 		sys.stdout.flush()
@@ -89,8 +147,11 @@ while connection_attempts < max_attempts:
 
 print("[STARTUP] Loading bot...")
 sys.stdout.flush()
+check_startup_timeout()
 try:
 	# Load bot
+	print("[STARTUP] Importing bot module...")
+	sys.stdout.flush()
 	import bot
 	print("[STARTUP] ✓ Bot loaded")
 	sys.stdout.flush()
@@ -102,23 +163,32 @@ except Exception as e:
 
 # Load web server
 print("[STARTUP] Checking web server configuration...")
+check_startup_timeout()
+sys.stdout.flush()
 if config.cfg.WS_ENABLE:
 	print("[STARTUP] Web server enabled, loading...")
+	sys.stdout.flush()
+	check_startup_timeout()
 	try:
 		from webui import webserver
 		print("[STARTUP] ✓ Web server loaded")
+		sys.stdout.flush()
 	except Exception as e:
 		print(f"[WARNING] Failed to load web server: {e}")
+		sys.stdout.flush()
 		webserver = False
 else:
 	print("[STARTUP] Web server disabled")
+	sys.stdout.flush()
 	webserver = False
 
+check_startup_timeout()
 log = console.log
 log.info("=" * 60)
 log.info("PUBobot2 Started Successfully")
 log.info("=" * 60)
 print("[STARTUP] ✓ All startup checks complete. Bot is starting Discord connection...")
+print(f"[STARTUP] Startup completed in {time.time() - startup_start_time:.2f} seconds")
 sys.stdout.flush()
 original_SIGINT_handler = signal.getsignal(signal.SIGINT)
 
