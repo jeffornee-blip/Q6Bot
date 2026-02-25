@@ -274,6 +274,42 @@ class EmojiVar(Variable):
 		else:
 			return string
 
+	async def wrap(self, value, guild: Guild):
+		""" Convert emoji from storage, fixing corrupted format if needed """
+		if value is None:
+			return None
+		
+		value_str = str(value)
+		
+		# Detect corrupted emoji format like ":SILV:" and convert to proper "<:SILV:ID>"
+		if value_str.startswith(':') and value_str.endswith(':'):
+			# This is corrupted format, try to get the emoji name
+			emoji_name = value_str.strip(':')
+			fixed = format_emoji(emoji_name, guild)
+			if fixed:
+				return fixed
+			# Fall back to emoji emojize if format_emoji didn't find it
+			return emoji.emojize(value_str, use_aliases=True)
+		
+		return value
+
+	def readable(self, obj):
+		""" Display emoji, fixing corrupted format if needed """
+		if obj is None:
+			return None
+		
+		obj_str = str(obj)
+		
+		# Detect corrupted emoji format like ":SILV:" and convert to proper "<:SILV:ID>"
+		if obj_str.startswith(':') and obj_str.endswith(':'):
+			# This is corrupted format, try to get the emoji name
+			emoji_name = obj_str.strip(':')
+			# Get the current guild from the bot's cache
+			# We'll return the emoji name as a hint for now
+			return f"(corrupted emoji: {emoji_name})"
+		
+		return obj_str
+
 
 class TextVar(Variable):
 
