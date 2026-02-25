@@ -273,6 +273,12 @@ async def _reset_qc(
 ): await run_slash(bot.commands.reset_qc, interaction=interaction)
 
 
+@groups.admin_channel.subcommand(name='fix-emojis', description='Repair corrupted emoji ranks.')
+async def _fix_emoji_ranks(
+		interaction: Interaction
+): await run_slash(bot.commands.fix_emoji_ranks, interaction=interaction)
+
+
 # match -> ...
 
 @groups.admin_match.subcommand(name='report', description='Report a match result as a moderator.')

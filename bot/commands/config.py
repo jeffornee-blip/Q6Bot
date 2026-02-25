@@ -1,6 +1,6 @@
 __all__ = [
 	'create_pickup', 'delete_queue', 'show_queues', 'set_qc', 'set_queue', 'cfg_qc', 'cfg_queue',
-	'set_qc_cfg', 'set_queue_cfg', 'reset_qc'
+	'set_qc_cfg', 'set_queue_cfg', 'reset_qc', 'fix_emoji_ranks'
 ]
 
 import json
@@ -143,3 +143,41 @@ async def reset_qc(ctx):
 		"ranks": default_ranks
 	})
 	await ctx.success("Channel configuration reset to defaults.")
+
+
+async def fix_emoji_ranks(ctx):
+	""" Repair corrupted emoji ranks (e.g., :SILV: → <:SILV:ID>) """
+	ctx.check_perms(ctx.Perms.ADMIN)
+	
+	# Define the default ranks with correct emoji IDs
+	default_ranks = [
+		dict(rank="<:CHAD:1471923932558000270>", rating="0", role=None),
+		dict(rank="<:WOOD:1471609879142600748>", rating="800", role=None),
+		dict(rank="<:IRON:1471610220269666435>", rating="1000", role=None),
+		dict(rank="<:BRNZ:1471610239299223644>", rating="1200", role=None),
+		dict(rank="<:SILV:1471610253559988429>", rating="1400", role=None),
+		dict(rank="<:GOLD:1471610519696707585>", rating="1600", role=None),
+		dict(rank="<:DIAM:1471610536604209272>", rating="1800", role=None),
+		dict(rank="<:CHMP:1471610553897324595>", rating="2000", role=None),
+		dict(rank="<:STAR:1471610576697426194>", rating="2200", role=None)
+	]
+	
+	current_ranks = ctx.qc.cfg.ranks
+	
+	# Check if any ranks are corrupted
+	corrupted = []
+	if current_ranks:
+		for rank in current_ranks:
+			rank_str = str(rank.get('rank', ''))
+			if rank_str.startswith(':') and rank_str.endswith(':'):
+				corrupted.append(rank_str)
+	
+	if corrupted:
+		# Fix by resetting to defaults
+		await ctx.qc.cfg.update({
+			"ranks": default_ranks
+		})
+		await ctx.success(f"✅ Fixed {len(corrupted)} corrupted emoji rank(s): {', '.join(corrupted)}")
+	else:
+		await ctx.success("✅ No corrupted emoji ranks found. All ranks are properly formatted.")
+
