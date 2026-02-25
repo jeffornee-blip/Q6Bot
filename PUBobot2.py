@@ -5,6 +5,15 @@
 
 import sys
 import os
+
+# FIRST: Check if we're in build mode BEFORE importing anything else
+# This prevents any blocking operations during the build verification phase
+_BUILD_MODE = not os.getenv('DATABASE_URL')
+if _BUILD_MODE:
+	print("BUILD_MODE: No DATABASE_URL - performing verification-only startup")
+	sys.exit(0)
+
+# Now safe to import everything
 import asyncio
 import time
 import traceback
@@ -21,17 +30,6 @@ from core import database
 from core.client import dc
 
 log = console.log
-
-# Check if we're in a build/health check mode
-# Railway's builder might run the worker command during build to check if it starts
-# In that case, we should just exit after imports are verified
-if os.getenv('RAILWAY_DEPLOYMENT') == None and os.getenv('DYNO') == None:
-	# Check if we have required environment variables
-	if not cfg.DC_BOT_TOKEN:
-		log.error("DC_BOT_TOKEN is not set!")
-		sys.exit(1)
-	if not cfg.DB_URI:
-		log.warning("DATABASE_URL is not set - database will not be available")
 
 # Setup signal handlers
 original_SIGINT_handler = signal.getsignal(signal.SIGINT)
@@ -130,14 +128,7 @@ async def force_update_after_ready():
     await bot.force_update.force_update_all_rating_roles()
 
 if __name__ == "__main__":
-	# Check if we're running in a container build environment
-	# If DATABASE_URL is not set, this is likely a build health check - just verify imports and exit
-	if not os.getenv('DATABASE_URL'):
-		log.info("DATABASE_URL not provided. This appears to be a build verification.")
-		log.info("PUBobot2 initialization successful. Exiting.")
-		sys.exit(0)
-	
-	# Only continue with full bot startup if we have database configured
+	# At this point, DATABASE_URL is guaranteed to be set (or we wouldn't reach here)
 	log.info('PUBobot2 Starting')
 	log.info("Connecting to discord...")
 	
