@@ -1,147 +1,182 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import time
-import signal
-import asyncio
-import traceback
-import queue
 import sys
-import os
-from asyncio import sleep as asleep
-from asyncio import iscoroutine
 
-# IMMEDIATE STARTUP DEBUG - write to multiple outputs to ensure we see something
+# ABSOLUTE FIRST THING: write to log file that we started
+log_file = None
 try:
-	with open('/tmp/pubobot_startup.log', 'w') as f:
-		f.write("SCRIPT STARTED\n")
+	log_file = open('/tmp/pubobot.log', 'w')
+	log_file.write("=== PUBobot2 Startup Log ===\n")
+	log_file.flush()
 except:
-	pass
-
-sys.stderr.write("PUBOBOT2 STDERR: Script started\n")
-sys.stderr.flush()
-print("PUBOBOT2 STDOUT: Script started", flush=True)
-
-print("=" * 60)
-print("PUBobot2 Starting...")
-print("=" * 60)
-sys.stdout.flush()
-
-# Check environment variables before loading anything
-print("\n[STARTUP] Checking environment variables...", flush=True)
-required_vars = ['DC_BOT_TOKEN', 'DATABASE_URL']
-missing_vars = []
-for var in required_vars:
-	if os.getenv(var):
-		print(f"✓ {var} is set", flush=True)
-	else:
-		print(f"✗ {var} is NOT set", flush=True)
-		missing_vars.append(var)
-
-if missing_vars:
-	print(f"\n[ERROR] Missing required environment variables: {', '.join(missing_vars)}", flush=True)
-	print("Cannot start bot without these variables!", flush=True)
-	sys.exit(1)
-
-print("\n[STARTUP] Loading bot core modules...", flush=True)
-try:
-	print("[STARTUP] Loading config...", flush=True)
-	from core import config
-	print("[STARTUP] ✓ config loaded", flush=True)
-	
-	print("[STARTUP] Loading console...", flush=True)
-	from core import console
-	print("[STARTUP] ✓ console loaded", flush=True)
-	
-	print("[STARTUP] Loading database...", flush=True)
-	from core import database
-	print("[STARTUP] ✓ database loaded", flush=True)
-	
-	print("[STARTUP] Loading locales...", flush=True)
-	from core import locales
-	print("[STARTUP] ✓ locales loaded", flush=True)
-	
-	print("[STARTUP] Loading cfg_factory...", flush=True)
-	from core import cfg_factory
-	print("[STARTUP] ✓ cfg_factory loaded", flush=True)
-	
-	print("[STARTUP] Loading Discord client...", flush=True)
-	from core.client import dc
-	print("[STARTUP] ✓ Discord client loaded", flush=True)
-	
-	print("[STARTUP] ✓ Core modules loaded", flush=True)
-except Exception as e:
-	sys.stderr.write(f"[ERROR] Failed to load core modules: {e}\n")
-	sys.stderr.write(traceback.format_exc() + "\n")
-	sys.stderr.flush()
-	print(f"[ERROR] Failed to load core modules: {e}", flush=True)
-	traceback.print_exc()
-	sys.exit(1)
-
-print("[STARTUP] Connecting to database...", flush=True)
-loop = asyncio.get_event_loop()
-connection_attempts = 0
-max_attempts = 3
-while connection_attempts < max_attempts:
-	connection_attempts += 1
 	try:
-		print(f"[STARTUP] Database connection attempt {connection_attempts}/{max_attempts}...", flush=True)
-		loop.run_until_complete(database.db.connect())
-		print("[STARTUP] ✓ Database connected", flush=True)
-		break
-	except asyncio.TimeoutError:
-		print(f"[WARNING] Database connection timeout on attempt {connection_attempts}/{max_attempts}", flush=True)
-		if connection_attempts >= max_attempts:
-			print(f"[ERROR] Failed to connect to database after {max_attempts} attempts: Timeout", flush=True)
-			print(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}", flush=True)
-			sys.exit(1)
-	except Exception as e:
-		print(f"[WARNING] Database connection error on attempt {connection_attempts}/{max_attempts}: {e}", flush=True)
-		if connection_attempts >= max_attempts:
-			print(f"[ERROR] Failed to connect to database: {e}", flush=True)
-			print(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}", flush=True)
-			traceback.print_exc()
-			sys.exit(1)
-	
-	if connection_attempts < max_attempts:
-		print("[STARTUP] Retrying in 2 seconds...", flush=True)
-		time.sleep(2)
+		log_file = open('pubobot_startup.log', 'w')
+		log_file.write("=== PUBobot2 Startup Log ===\n")
+		log_file.flush()
+	except:
+		log_file = None
 
-print("[STARTUP] Loading bot...", flush=True)
-try:
-	print("[STARTUP] Importing bot module...", flush=True)
-	import bot
-	print("[STARTUP] ✓ Bot loaded", flush=True)
-except Exception as e:
-	print(f"[ERROR] Failed to load bot: {e}", flush=True)
-	sys.stderr.write(f"[ERROR] Failed to load bot: {e}\n")
-	sys.stderr.write(traceback.format_exc() + "\n")
+def log_msg(msg):
+	"""Write to all available output streams"""
+	print(msg, flush=True)
+	sys.stderr.write(msg + "\n")
 	sys.stderr.flush()
-	traceback.print_exc()
+	if log_file:
+		log_file.write(msg + "\n")
+		log_file.flush()
+
+log_msg("PYTHON_PROCESS_STARTED")
+
+print("PYTHON_STARTED", flush=True)
+sys.stderr.write("PYTHON_STARTED_STDERR\n")
+sys.stderr.flush()
+
+try:
+	import time
+	import signal
+	import asyncio
+	import traceback
+	import queue
+	import os
+	from asyncio import sleep as asleep
+	from asyncio import iscoroutine
+	
+	log_msg("IMPORTS_COMPLETE")
+	
+	# IMMEDIATE STARTUP DEBUG - write to multiple outputs to ensure we see something
+	try:
+		with open('/tmp/pubobot_startup.log', 'w') as f:
+			f.write("SCRIPT STARTED\n")
+	except:
+		pass
+	
+	log_msg("PUBOBOT2: Script started and ready")
+	
+	log_msg("=" * 60)
+	log_msg("PUBobot2 Starting...")
+	log_msg("=" * 60)
+	
+	# Check environment variables before loading anything
+	log_msg("\n[STARTUP] Checking environment variables...")
+	required_vars = ['DC_BOT_TOKEN', 'DATABASE_URL']
+	missing_vars = []
+	for var in required_vars:
+		if os.getenv(var):
+			log_msg(f"✓ {var} is set")
+		else:
+			log_msg(f"✗ {var} is NOT set")
+			missing_vars.append(var)
+	
+	if missing_vars:
+		log_msg(f"\n[ERROR] Missing required environment variables: {', '.join(missing_vars)}")
+		log_msg("Cannot start bot without these variables!")
+		sys.exit(1)
+	
+	log_msg("\n[STARTUP] Loading bot core modules...")
+	try:
+		log_msg("[STARTUP] Loading config...")
+		from core import config
+		log_msg("[STARTUP] ✓ config loaded")
+		
+		log_msg("[STARTUP] Loading console...")
+		from core import console
+		log_msg("[STARTUP] ✓ console loaded")
+		
+		log_msg("[STARTUP] Loading database...")
+		from core import database
+		log_msg("[STARTUP] ✓ database loaded")
+		
+		log_msg("[STARTUP] Loading locales...")
+		from core import locales
+		log_msg("[STARTUP] ✓ locales loaded")
+		
+		log_msg("[STARTUP] Loading cfg_factory...")
+		from core import cfg_factory
+		log_msg("[STARTUP] ✓ cfg_factory loaded")
+		
+		log_msg("[STARTUP] Loading Discord client...")
+		from core.client import dc
+		log_msg("[STARTUP] ✓ Discord client loaded")
+		
+		log_msg("[STARTUP] ✓ Core modules loaded")
+		
+		log_msg("[STARTUP] Connecting to database...")
+		loop = asyncio.get_event_loop()
+		connection_attempts = 0
+		max_attempts = 3
+		while connection_attempts < max_attempts:
+			connection_attempts += 1
+			try:
+				log_msg(f"[STARTUP] Database connection attempt {connection_attempts}/{max_attempts}...")
+				loop.run_until_complete(database.db.connect())
+				log_msg("[STARTUP] ✓ Database connected")
+				break
+			except asyncio.TimeoutError:
+				log_msg(f"[WARNING] Database connection timeout on attempt {connection_attempts}/{max_attempts}")
+				if connection_attempts >= max_attempts:
+					log_msg(f"[ERROR] Failed to connect to database after {max_attempts} attempts: Timeout")
+					log_msg(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}")
+					sys.exit(1)
+			except Exception as e:
+				log_msg(f"[WARNING] Database connection error on attempt {connection_attempts}/{max_attempts}: {e}")
+				if connection_attempts >= max_attempts:
+					log_msg(f"[ERROR] Failed to connect to database: {e}")
+					log_msg(f"[ERROR] DATABASE_URL: {os.getenv('DATABASE_URL')}")
+					raise
+			
+			if connection_attempts < max_attempts:
+				log_msg("[STARTUP] Retrying in 2 seconds...")
+				time.sleep(2)
+		
+		log_msg("[STARTUP] Loading bot...")
+		log_msg("[STARTUP] Importing bot module...")
+		import bot
+		log_msg("[STARTUP] ✓ Bot loaded")
+		
+		# Load web server
+		log_msg("[STARTUP] Checking web server configuration...")
+		if config.cfg.WS_ENABLE:
+			log_msg("[STARTUP] Web server enabled, loading...")
+			try:
+				from webui import webserver
+				log_msg("[STARTUP] ✓ Web server loaded")
+			except Exception as e:
+				log_msg(f"[WARNING] Failed to load web server: {e}")
+				webserver = False
+		else:
+			log_msg("[STARTUP] Web server disabled")
+			webserver = False
+		
+		log = console.log
+		log.info("=" * 60)
+		log.info("PUBobot2 Started Successfully")
+		log.info("=" * 60)
+		log_msg("[STARTUP] ✓ All startup checks complete. Bot is starting Discord connection...")
+		if log_file:
+			log_file.close()
+			log_file = None
+	
+	except Exception as e:
+		log_msg(f"[ERROR] Failed during startup: {e}")
+		log_msg(traceback.format_exc())
+		sys.exit(1)
+
+except Exception as e:
+	# Catch ANYTHING that happens before the normal error handling
+	msg = f"CRITICAL ERROR: {e}\n{traceback.format_exc()}"
+	print(msg, flush=True)
+	sys.stderr.write(msg + "\n")
+	sys.stderr.flush()
+	if log_file:
+		log_file.write(msg + "\n")
+		log_file.flush()
+		log_file.close()
 	sys.exit(1)
 
-# Load web server
-print("[STARTUP] Checking web server configuration...", flush=True)
-if config.cfg.WS_ENABLE:
-	print("[STARTUP] Web server enabled, loading...", flush=True)
-	try:
-		from webui import webserver
-		print("[STARTUP] ✓ Web server loaded", flush=True)
-	except Exception as e:
-		print(f"[WARNING] Failed to load web server: {e}", flush=True)
-		webserver = False
-else:
-	print("[STARTUP] Web server disabled", flush=True)
-	webserver = False
-
-log = console.log
-log.info("=" * 60)
-log.info("PUBobot2 Started Successfully")
-log.info("=" * 60)
-print("[STARTUP] ✓ All startup checks complete. Bot is starting Discord connection...", flush=True)
-sys.stderr.write("[STARTUP] Startup complete - connecting to Discord\n")
-sys.stderr.flush()
+# Now setup signal handlers and event loop
 original_SIGINT_handler = signal.getsignal(signal.SIGINT)
+
 
 
 def ctrl_c(sig, frame):
