@@ -1,1 +1,1 @@
-worker: bash start.sh
+worker: python -u PUBobot2.py
