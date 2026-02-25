@@ -8,14 +8,20 @@ Bulletproof startup with hard timeout to prevent hanging forever
 import sys
 import os
 
-# FORCE unbuffered output at Python level
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
-sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)
+# FORCE unbuffered output at Python level IMMEDIATELY
+try:
+    sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
+    sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)
+except:
+    pass  # If this fails, continue anyway
 
 import signal
 
-print("=== PYTHON STARTUP ===", flush=True)
-sys.stdout.flush()
+# Write immediately to both stdout and stderr
+msg = "=== PYTHON STARTUP ==="
+print(msg, flush=True)
+sys.stderr.write(msg + '\n')
+sys.stderr.flush()
 
 # HARD TIMEOUT: Exit after 30 seconds no matter what
 def timeout_exit(sig, frame):
