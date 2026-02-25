@@ -4,4 +4,8 @@ builder = "nixpacks"
 [providers.python]
 # Force binary wheels only, no compilation
 node = "20"
-nixpacks_version = "1.24.1"
+nixpacks_version = "1.41.0"
+
+[build.env]
+PIP_ONLY_BINARY = ":all:"
+PIP_NO_CACHE_DIR = "true"
