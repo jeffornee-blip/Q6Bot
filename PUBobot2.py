@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# WRITE TO FILE BEFORE ANY IMPORTS - this MUST succeed
+with open('startup_trace.txt', 'a') as f:
+	f.write("=== Python script execution started ===\n")
+	f.flush()
+
 import sys
 
 # ABSOLUTE FIRST THING: write to log file that we started
@@ -19,12 +24,18 @@ except:
 
 def log_msg(msg):
 	"""Write to all available output streams"""
-	print(msg, flush=True)
-	sys.stderr.write(msg + "\n")
+	import datetime
+	timestamp = datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+	formatted_msg = f"[{timestamp}] {msg}"
+	print(formatted_msg, flush=True)
+	sys.stderr.write(formatted_msg + "\n")
 	sys.stderr.flush()
 	if log_file:
-		log_file.write(msg + "\n")
+		log_file.write(formatted_msg + "\n")
 		log_file.flush()
+	with open('startup_trace.txt', 'a') as f:
+		f.write(formatted_msg + "\n")
+		f.flush()
 
 log_msg("PYTHON_PROCESS_STARTED")
 
