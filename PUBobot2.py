@@ -2,11 +2,25 @@
 # -*- coding: utf-8 -*-
 
 """
-Bulletproof startup that writes diagnostics to multiple files
+Bulletproof startup with hard timeout to prevent hanging forever
 """
 
 import sys
 import os
+import signal
+
+# HARD TIMEOUT: Exit after 30 seconds no matter what
+def timeout_exit(sig, frame):
+    print('TIMEOUT: Startup exceeded 30 seconds - exiting', flush=True)
+    try:
+        with open('pubobot_timeout.txt', 'w') as f:
+            f.write('Startup timed out after 30 seconds\n')
+    except:
+        pass
+    sys.exit(1)
+
+signal.signal(signal.SIGALRM, timeout_exit)
+signal.alarm(30)
 
 # ONE: Write to current directory immediately
 try:
@@ -21,7 +35,6 @@ except Exception as e:
 try:
     # Import all requirements first
     import asyncio
-    import signal
     import time
     import traceback
     import queue
@@ -39,16 +52,19 @@ try:
     # Check env variables
     if not os.getenv('DC_BOT_TOKEN') or not os.getenv('DATABASE_URL'):
         print('Missing required environment variables', flush=True)
+        signal.alarm(0)
         sys.exit(1)
     
     print('Environment OK', flush=True)
     
-    # Connect database
+    # Connect database with timeout
+    print('Connecting to database...', flush=True)
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(database.db.connect())
+    loop.run_until_complete(asyncio.wait_for(database.db.connect(), timeout=10))
     print('Database connected', flush=True)
     
     # Import bot
+    print('Importing bot module...', flush=True)
     import bot
     print('Bot module loaded', flush=True)
     
@@ -58,16 +74,18 @@ try:
             from webui import webserver
             print('Webserver loaded', flush=True)
         except:
-            print('Webserver load failed', flush=True)
+            print('Webserver load failed (continuing)', flush=True)
             webserver = False
     else:
         webserver = False
     
     print('Startup complete', flush=True)
+    signal.alarm(0)  # Cancel timeout
     log = console.log
     log.info('PUBobot2 Started')
 
 except Exception as e:
+    signal.alarm(0)  # Cancel timeout
     err_msg = f'Startup failed: {e}\n{traceback.format_exc()}'
     print(err_msg, flush=True)
     sys.stderr.write(err_msg + '\n')
