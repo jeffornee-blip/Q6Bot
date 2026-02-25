@@ -7,7 +7,15 @@ Bulletproof startup with hard timeout to prevent hanging forever
 
 import sys
 import os
+
+# FORCE unbuffered output at Python level
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 1)
+sys.stderr = os.fdopen(sys.stderr.fileno(), 'w', 1)
+
 import signal
+
+print("=== PYTHON STARTUP ===", flush=True)
+sys.stdout.flush()
 
 # HARD TIMEOUT: Exit after 30 seconds no matter what
 def timeout_exit(sig, frame):
@@ -28,12 +36,15 @@ try:
         f.write('Python process started\n')
         f.write(f'CWD: {os.getcwd()}\n')
         f.write(f'Python: {sys.version}\n')
+    print("Startup file written", flush=True)
 except Exception as e:
+    print(f'Cannot write to current dir: {e}', flush=True)
     sys.stderr.write(f'Cannot write to current dir: {e}\n')
 
 # TWO: Try to import and run the bot - catch ANY error
 try:
     # Import all requirements first
+    print('Importing sys modules...', flush=True)
     import asyncio
     import time
     import traceback
@@ -44,12 +55,14 @@ try:
     print('Standard imports OK', flush=True)
     
     # Now import bot modules
+    print('Importing core modules...', flush=True)
     from core import config, console, database, locales, cfg_factory
     from core.client import dc
     
     print('Core modules OK', flush=True)
     
     # Check env variables
+    print('Checking environment...', flush=True)
     if not os.getenv('DC_BOT_TOKEN') or not os.getenv('DATABASE_URL'):
         print('Missing required environment variables', flush=True)
         signal.alarm(0)
@@ -69,6 +82,7 @@ try:
     print('Bot module loaded', flush=True)
     
     # Check webserver
+    print('Checking webserver...', flush=True)
     if config.cfg.WS_ENABLE:
         try:
             from webui import webserver
@@ -77,6 +91,7 @@ try:
             print('Webserver load failed (continuing)', flush=True)
             webserver = False
     else:
+        print('Webserver disabled', flush=True)
         webserver = False
     
     print('Startup complete', flush=True)
