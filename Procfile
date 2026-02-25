@@ -1,1 +1,1 @@
-worker: sh -c 'echo "Starting bot..."; python -u PUBobot2.py'
+worker: exec python -u PUBobot2.py 2>&1
