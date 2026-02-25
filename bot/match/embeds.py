@@ -74,7 +74,7 @@ class Embeds:
 		)
 		teams_names = [
 			f"{t.name[:1].upper() + t.name[1:]} {t.emoji}" +
-			(f" {self.m.rank_str(sum((self.m.ratings[p.id] for p in t))//(len(t) or 1))} `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
+			(f" {self.m.queue.qc.rating_rank(sum((self.m.ratings[p.id] for p in t))//(len(t) or 1))['rank']} `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
 			for t in self.m.teams[:2]
 		]
 		team_players = [
@@ -124,16 +124,16 @@ class Embeds:
 		if len(self.m.teams[0]) == 1 and len(self.m.teams[1]) == 1:  # 1v1
 			p1, p2 = self.m.teams[0][0], self.m.teams[1][0]
 			players = " \u200b {player1}{rating1}\n \u200b {player2}{rating2}".format(
-				rating1=f" \u200b {self.m.rank_str(self.m.ratings[p1.id])} `〈{self.m.ratings[p1.id]}〉`" if show_ranks else "",
+				rating1=f" \u200b {self.m.queue.qc.rating_rank(self.m.ratings[p1.id])['rank']} `〈{self.m.ratings[p1.id]}〉`" if show_ranks else "",
 				player1=f"<@{p1.id}>",
-				rating2=f" \u200b {self.m.rank_str(self.m.ratings[p2.id])} `〈{self.m.ratings[p2.id]}〉`" if show_ranks else "",
+				rating2=f" \u200b {self.m.queue.qc.rating_rank(self.m.ratings[p2.id])['rank']} `〈{self.m.ratings[p2.id]}〉`" if show_ranks else "",
 				player2=f"<@{p2.id}>",
 			)
 			embed.add_field(name=self.m.gt("Players"), value=players, inline=False)
 		elif len(self.m.teams[0]):  # team vs team
 			teams_names = [
 				f"{t.name[:1].upper() + t.name[1:]} {t.emoji}" +
-				(f" {self.m.rank_str(sum((self.m.ratings[p.id] for p in t))//(len(t) or 1))} `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
+				(f" {self.m.queue.qc.rating_rank(sum((self.m.ratings[p.id] for p in t))//(len(t) or 1))['rank']} `〈{sum((self.m.ratings[p.id] for p in t))//(len(t) or 1)}〉`" if self.m.ranked else "")
 				for t in self.m.teams[:2]
 			]
 			team_players = [
