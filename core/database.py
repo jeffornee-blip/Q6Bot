@@ -8,6 +8,8 @@ def get_db():
 	"""Lazy-load database connection"""
 	global _db
 	if _db is None:
+		if not cfg.DB_URI:
+			raise ValueError("DATABASE_URL not set! Cannot initialize database connection. Set it via environment variable or config.cfg")
 		db_type, db_address = cfg.DB_URI.split("://", 1)
 		adapter = import_module('core.DBAdapters.' + db_type)
 		_db = adapter.Adapter(db_address)

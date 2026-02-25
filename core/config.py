@@ -54,8 +54,12 @@ class Config:
 		# Validate critical config
 		if not self.DC_BOT_TOKEN:
 			raise ValueError("DC_BOT_TOKEN not set! Set it via environment variable or config.cfg")
+		# DB_URI is optional during initialization - will be required at connect time
 		if not self.DB_URI:
-			raise ValueError("DB_URI/DATABASE_URL not set! Set it via environment variable or config.cfg")
+			import sys
+			# Only warn, don't raise - database may not be needed during build phase
+			if '--require-db' in sys.argv:
+				raise ValueError("DB_URI/DATABASE_URL not set! Set it via environment variable or config.cfg")
 
 
 cfg = Config()
