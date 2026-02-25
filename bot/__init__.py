@@ -2,7 +2,7 @@
 
 from .main import update_qc_lang, update_rating_system, save_state
 from .main import load_state, enable_channel, disable_channel
-from .main import remove_players, expire_auto_ready
+from .main import remove_players, expire_auto_ready, initialize_factories
 
 from .queue_channel import QueueChannel
 from .queues.pickup_queue import PickupQueue

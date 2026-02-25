@@ -70,6 +70,14 @@ async def think(loop):
 		await asyncio.wait_for(db.connect(), timeout=30)
 		db_connected = True
 		log.info("Database connected successfully")
+		
+		# Initialize factory tables after database connection
+		try:
+			await bot.initialize_factories()
+		except Exception as e:
+			log.error(f"Error initializing factories: {e}\n{traceback.format_exc()}")
+			raise
+			
 	except asyncio.TimeoutError:
 		log.error("Database connection timed out after 30 seconds. This may be normal if the database is initializing.")
 	except Exception as e:

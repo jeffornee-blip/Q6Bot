@@ -62,12 +62,15 @@ class FactoryTable:
 		self.name = name
 		self.p_key = p_key
 		self.f_key = f_key
+		self._initialized = False
 
+		# Store table definition but DON'T try to create it yet
+		# (database may not be connected during module import)
 		keys = [dict(cname=p_key, ctype=db.types.int, notnull=True, autoincrement=True)]
 		if f_key:
 			keys.append(dict(cname=f_key, ctype=db.types.int))
 
-		db.ensure_table(dict(
+		self.table_def = dict(
 			tname=self.name,
 			columns=[
 				*keys,
@@ -77,9 +80,18 @@ class FactoryTable:
 				dict(cname='cfg_data', ctype=db.types.dict)
 			],
 			primary_keys=[self.p_key]
-		))
+		)
 
-		db.loop.run_until_complete(self.ensure_versions())
+	async def initialize(self) -> None:
+		""" Initialize the database table - call this after database connection """
+		if self._initialized:
+			return
+		
+		# Call the async _ensure_table directly instead of ensure_table 
+		# to avoid run_until_complete issues when called from async context
+		await db._ensure_table(self.table_def)
+		await self.ensure_versions()
+		self._initialized = True
 
 	async def ensure_versions(self) -> None:
 		""" Ensure all rows in the table have correct FACTORY_VERSION """

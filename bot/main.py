@@ -112,3 +112,22 @@ async def expire_auto_ready(frame_time):
 	for user_id, at in list(bot.auto_ready.items()):
 		if at < frame_time:
 			bot.auto_ready.pop(user_id)
+
+
+async def initialize_factories():
+	"""Initialize all database FactoryTable instances after database connection.
+	This must be called after database.connect() to avoid hanging on module import."""
+	log.info("Initializing database factory tables...")
+	try:
+		# Initialize QueueChannel factory
+		await bot.QueueChannel.cfg_factory.table.initialize()
+		log.info("  ✓ QueueChannel factory initialized")
+		
+		# Initialize PickupQueue factory
+		await bot.PickupQueue.cfg_factory.table.initialize()
+		log.info("  ✓ PickupQueue factory initialized")
+		
+		log.info("All factory tables initialized successfully")
+	except Exception as e:
+		log.error(f"Error initializing factory tables: {e}\n{traceback.format_exc()}")
+		raise
