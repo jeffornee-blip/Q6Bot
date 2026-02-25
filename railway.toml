@@ -1,5 +1,7 @@
 [build]
 builder = "nixpacks"
 
-[environments.production]
-NODE_ENV = "production"
+[providers.python]
+# Force binary wheels only, no compilation
+node = "20"
+nixpacks_version = "1.24.1"
