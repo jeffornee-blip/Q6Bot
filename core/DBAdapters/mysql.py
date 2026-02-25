@@ -50,15 +50,19 @@ class Adapter:
 	async def connect(self):
 		self.loop = asyncio.get_running_loop()
 		try:
-			self.pool = await aiomysql.create_pool(
-				host=self.dbHost,
-				user=self.dbUser,
-				password=self.dbPassword,
-				db=self.dbName,
-				charset='utf8mb4',
-				autocommit=True,
-				cursorclass=aiomysql.cursors.DictCursor)
+			self.pool = await asyncio.wait_for(
+				aiomysql.create_pool(
+					host=self.dbHost,
+					user=self.dbUser,
+					password=self.dbPassword,
+					db=self.dbName,
+					charset='utf8mb4',
+					autocommit=True,
+					cursorclass=aiomysql.cursors.DictCursor),
+				timeout=10)
 
+		except asyncio.TimeoutError:
+			raise Exception(f"Database connection timeout after 10 seconds. Check DATABASE_URL and network connectivity.")
 		except mysqlErr.Error as e:
 			self.wrap_exc(e)
 
