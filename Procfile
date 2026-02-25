@@ -1,1 +1,1 @@
-worker: exec python -u PUBobot2.py 2>&1
+worker: python -u -c "print('RAILWAY_PYTHON_OK'); import sys; sys.stdout.flush()" ; python -u PUBobot2.py
