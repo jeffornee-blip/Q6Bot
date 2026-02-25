@@ -1,1 +1,1 @@
-worker: python -u PUBobot2.py
+worker: python PUBobot2.py

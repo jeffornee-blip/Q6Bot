@@ -1,170 +1,84 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-# ============================================================================
-# ABSOLUTE FIRST ACTION: Write to file BEFORE anything else
-# ============================================================================
+"""
+Bulletproof startup that writes diagnostics to multiple files
+"""
 
 import sys
 import os
 
-TRACE_FILE = "startup.trace"
-
-# Delete old trace file
+# ONE: Write to current directory immediately
 try:
-    os.remove(TRACE_FILE)
-except:
-    pass
+    with open('pubobot_startup.txt', 'w') as f:
+        f.write('Python process started\n')
+        f.write(f'CWD: {os.getcwd()}\n')
+        f.write(f'Python: {sys.version}\n')
+except Exception as e:
+    sys.stderr.write(f'Cannot write to current dir: {e}\n')
 
-def trace(msg, also_print=True):
-    """Write message to trace file and optionally stdout"""
-    try:
-        with open(TRACE_FILE, 'a') as f:
-            f.write(msg + "\n")
-            f.flush()
-        os.fsync(open(TRACE_FILE, 'r').fileno())  # Force disk sync
-    except Exception as e:
-        if also_print:
-            print(f"TRACE ERROR: {e}", flush=True)
-    
-    if also_print:
-        print(msg, flush=True)
-        sys.stderr.write(msg + "\n")
-        sys.stderr.flush()
-
-# IMMEDIATE PROOF OF EXECUTION
-trace("=" * 80)
-trace("PUBOBOT2 PYTHON PROCESS STARTED", also_print=True)
-trace("=" * 80)
-trace(f"Python: {sys.version}")
-trace(f"Executable: {sys.executable}")
-trace(f"CWD: {os.getcwd()}")
-trace(f"PID: {os.getpid()}")
-
-# Add startup timeout
-import signal
-import time
-
-STARTUP_TIMEOUT = 60  # 60 seconds
-
-def timeout_handler(signum, frame):
-    trace("STARTUP TIMEOUT EXCEEDED - exiting", also_print=True)
-    with open(TRACE_FILE, 'a') as f:
-        f.write("STARTUP TIMEOUT - bot did not complete initialization\n")
-    sys.exit(1)
-
-signal.signal(signal.SIGALRM, timeout_handler)
-signal.alarm(STARTUP_TIMEOUT)
-
-trace("Timeout set to 60 seconds")
-
+# TWO: Try to import and run the bot - catch ANY error
 try:
-    # Now do imports
-    trace("Importing standard library modules...")
+    # Import all requirements first
     import asyncio
+    import signal
+    import time
     import traceback
     import queue
     from asyncio import sleep as asleep
     from asyncio import iscoroutine
-    trace("Standard library imports complete")
     
-    # Now core modules
-    trace("Importing core.config...")
-    from core import config
-    trace("✓ config imported")
+    print('Standard imports OK', flush=True)
     
-    trace("Importing core.console...")
-    from core import console
-    trace("✓ console imported")
-    
-    trace("Importing core.database...")
-    from core import database
-    trace("✓ database imported")
-    
-    trace("Importing core.locales...")
-    from core import locales
-    trace("✓ locales imported")
-    
-    trace("Importing core.cfg_factory...")
-    from core import cfg_factory
-    trace("✓ cfg_factory imported")
-    
-    trace("Importing core.client...")
+    # Now import bot modules
+    from core import config, console, database, locales, cfg_factory
     from core.client import dc
-    trace("✓ client imported")
     
-    trace("All core modules imported successfully")
+    print('Core modules OK', flush=True)
     
-    # Cancel timeout alarm
-    signal.alarm(0)
+    # Check env variables
+    if not os.getenv('DC_BOT_TOKEN') or not os.getenv('DATABASE_URL'):
+        print('Missing required environment variables', flush=True)
+        sys.exit(1)
     
-    # Setup logging
-    log_file = None
-    try:
-        log_file = open("startup.log", 'w')
-        log_file.write("=== Startup Log ===\n")
-        log_file.flush()
-    except:
-        pass
+    print('Environment OK', flush=True)
     
-    def log_msg(msg):
-        trace(msg)
-        if log_file:
-            log_file.write(msg + "\n")
-            log_file.flush()
-    
-    log_msg("Environment check...")
-    required_vars = ['DC_BOT_TOKEN', 'DATABASE_URL']
-    for var in required_vars:
-        if os.getenv(var):
-            log_msg(f"✓ {var} is set")
-        else:
-            log_msg(f"✗ {var} is NOT set")
-            sys.exit(1)
-    
-    log_msg("Connecting to database...")
+    # Connect database
     loop = asyncio.get_event_loop()
     loop.run_until_complete(database.db.connect())
-    log_msg("✓ Database connected")
+    print('Database connected', flush=True)
     
-    log_msg("Importing bot module...")
+    # Import bot
     import bot
-    log_msg("✓ Bot imported")
+    print('Bot module loaded', flush=True)
     
-    log_msg("Loading web server config...")
+    # Check webserver
     if config.cfg.WS_ENABLE:
-        log_msg("Web server enabled")
         try:
             from webui import webserver
-            log_msg("✓ Web server loaded")
-        except Exception as e:
-            log_msg(f"Warning: web server load failed: {e}")
+            print('Webserver loaded', flush=True)
+        except:
+            print('Webserver load failed', flush=True)
             webserver = False
     else:
-        log_msg("Web server disabled")
         webserver = False
     
+    print('Startup complete', flush=True)
     log = console.log
-    log.info("=" * 60)
-    log.info("PUBobot2 Started Successfully")
-    log.info("=" * 60)
-    
-    log_msg("=" * 80)
-    log_msg("STARTUP COMPLETE - BOT IS READY")
-    log_msg("=" * 80)
-    
-    if log_file:
-        log_file.close()
+    log.info('PUBobot2 Started')
 
 except Exception as e:
-    signal.alarm(0)  # Cancel timeout
-    error_msg = f"STARTUP ERROR: {e}\n{traceback.format_exc()}"
-    trace(error_msg, also_print=True)
+    err_msg = f'Startup failed: {e}\n{traceback.format_exc()}'
+    print(err_msg, flush=True)
+    sys.stderr.write(err_msg + '\n')
+    sys.stderr.flush()
     
-    if log_file:
-        log_file.write(error_msg + "\n")
-        log_file.flush()
-        log_file.close()
+    # Write to file
+    try:
+        with open('pubobot_error.txt', 'w') as f:
+            f.write(err_msg)
+    except:
+        pass
     
     sys.exit(1)
 
