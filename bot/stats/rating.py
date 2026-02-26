@@ -309,18 +309,10 @@ class TrueSkillRating(BaseRating):
 
 class Quidditch6v6Rating(BaseRating):
 	"""
-	Competitive Quidditch 6v6 rating system with role, draft position, and captain weighting.
-	Roles: Keeper, Seeker, Beater (1.15x) vs Chaser (1.0x)
+	Competitive Quidditch 6v6 rating system with draft position and captain weighting.
 	Draft picks: 1st=1.3x, 2nd=1.2x, 3rd=1.15x, 4th=1.1x, 5th=1.0x
 	Captains: +1.15x multiplier
 	"""
-
-	ROLE_MULTIPLIERS = {
-		'keeper': 1.15,
-		'seeker': 1.15,
-		'beater': 1.15,
-		'chaser': 1.0
-	}
 
 	DRAFT_MULTIPLIERS = [1.3, 1.2, 1.15, 1.1, 1.0]  # For picks 1-5
 
@@ -331,21 +323,6 @@ class Quidditch6v6Rating(BaseRating):
 
 	def __init__(self, **kwargs):
 		super().__init__(**kwargs)
-
-	def _get_role_multiplier(self, member):
-		"""Get role multiplier from Discord member's roles"""
-		if not hasattr(member, 'roles'):
-			return 1.0
-		
-		role_names = [r.name.lower() for r in member.roles]
-		
-		# Check for high-value roles (Keeper, Seeker, Beater)
-		for role in ['keeper', 'seeker', 'beater']:
-			if role in role_names:
-				return self.ROLE_MULTIPLIERS[role]
-		
-		# Default to Chaser
-		return self.ROLE_MULTIPLIERS['chaser']
 
 	def _get_draft_multiplier(self, draft_position):
 		"""Get draft multiplier based on pick position (0-indexed)"""
@@ -430,9 +407,6 @@ class Quidditch6v6Rating(BaseRating):
 			base_change = self.K_FACTOR * (actual_score - expected_score)
 			
 			# Apply multipliers
-			member = winner_meta['members'].get(p['user_id'])
-			role_mult = self._get_role_multiplier(member) if member else 1.0
-			
 			draft_pos = winner_meta['draft_positions'].get(p['user_id'], 4)  # Default to 5th pick
 			draft_mult = self._get_draft_multiplier(draft_pos)
 			
@@ -443,7 +417,7 @@ class Quidditch6v6Rating(BaseRating):
 			streak_mult = self._get_streak_multiplier(p.get('streak', 0), is_win=True)
 			
 			# Final rating change
-			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult * streak_mult
+			r_change = base_change * draft_mult * captain_mult * team_diff_mult * streak_mult
 			
 			# Apply minimum gain
 			r_change = max(self.MIN_GAIN, r_change)
@@ -462,9 +436,6 @@ class Quidditch6v6Rating(BaseRating):
 			base_change = self.K_FACTOR * (actual_score - expected_score)
 			
 			# Apply multipliers
-			member = loser_meta['members'].get(p['user_id'])
-			role_mult = self._get_role_multiplier(member) if member else 1.0
-			
 			draft_pos = loser_meta['draft_positions'].get(p['user_id'], 4)  # Default to 5th pick
 			draft_mult = self._get_draft_multiplier(draft_pos)
 			
@@ -475,7 +446,7 @@ class Quidditch6v6Rating(BaseRating):
 			streak_mult = self._get_streak_multiplier(p.get('streak', 0), is_win=False)
 			
 			# Final rating change
-			r_change = base_change * role_mult * draft_mult * captain_mult * team_diff_mult * streak_mult
+			r_change = base_change * draft_mult * captain_mult * team_diff_mult * streak_mult
 			
 			# Apply minimum loss (more negative)
 			r_change = min(-self.MIN_LOSS, r_change)
