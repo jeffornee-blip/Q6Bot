@@ -314,7 +314,7 @@ class Quidditch6v6Rating(BaseRating):
 	Captains: +1.15x multiplier
 	"""
 
-	DRAFT_MULTIPLIERS = [1.3, 1.2, 1.15, 1.1, 1.0]  # For picks 1-5
+	DRAFT_MULTIPLIERS = [1.3, 1.2, 1.2, 1.15, 1.125, 1.1, 1.075, 1.05, 1.0, 1.0]  # For picks 0-9 (0-indexed)
 
 	CAPTAIN_MULTIPLIER = 1.15
 	MIN_GAIN = 10

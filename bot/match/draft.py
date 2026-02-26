@@ -102,12 +102,11 @@ class Draft:
 				# if rest of pick_order is a single team
 				if len(set(self.pick_order[pick_step+1:])) == 1:
 					picker_team = self.m.teams[self.pick_order[pick_step+1]]
-					for remaining_player in self.m.teams[2]:
-						# Track draft position for auto-picked players based on round
-						auto_total_picks = len(self.m.teams[0]) + len(self.m.teams[1]) - 2
-						auto_draft_round = auto_total_picks // 2
-						auto_draft_position = min(auto_draft_round, 4)
-						self.m.draft_positions[remaining_player.id] = auto_draft_position
+					for i, remaining_player in enumerate(self.m.teams[2]):
+						# Track draft position based on global pick count (0-indexed)
+						total_picks = len(self.m.teams[0]) + len(self.m.teams[1]) - 2 + i
+						draft_pos = min(total_picks, 9)
+						self.m.draft_positions[remaining_player.id] = draft_pos
 					picker_team.extend(self.m.teams[2])
 					self.m.teams[2].clear()
 
@@ -132,9 +131,11 @@ class Draft:
 		# Track draft position if moving from unpicked to a team during draft
 		if old_team is None or old_team.idx == 2:  # Was unpicked or is being moved from unpicked
 			if team.idx in [0, 1]:  # Moving to an actual team
+				# Draft position based on global pick count (0-indexed)
+				# Total picks minus 2 for captains
 				total_picks = len(self.m.teams[0]) + len(self.m.teams[1]) - 2
-				draft_round = total_picks // 2
-				self.m.draft_positions[player.id] = min(draft_round, 4)
+				draft_pos = min(total_picks, 9)
+				self.m.draft_positions[player.id] = draft_pos
 		
 		await self.m.qc.remove_members(player, ctx=ctx)
 		await self.refresh(ctx)

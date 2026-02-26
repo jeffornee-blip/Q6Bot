@@ -197,18 +197,15 @@ async def register_match_ranked(ctx, m):
 	if m.winner is None:  # draw
 		after = m.qc.rating.rate(winners=results[0][0], losers=results[0][1], draw=True, winner_meta=alpha_meta, loser_meta=beta_meta)
 		results.append(after)
-	else:  # process actual scores
-		n = 0
-		while n < m.scores[0] or n < m.scores[1]:
-			if n < m.scores[0]:
-				# Team 0 scored - they are winners this point
-				after = m.qc.rating.rate(winners=results[-1][0], losers=results[-1][1], draw=False, winner_meta=alpha_meta, loser_meta=beta_meta)
-				results.append(after)
-			if n < m.scores[1]:
-				# Team 1 scored - they are winners this point
-				after = m.qc.rating.rate(winners=results[-1][1], losers=results[-1][0], draw=False, winner_meta=beta_meta, loser_meta=alpha_meta)
-				results.append(after[::-1])
-			n += 1
+	else:  # Determine winner based on final match outcome
+		if m.winner == 0:
+			# Team 0 (alpha) won
+			after = m.qc.rating.rate(winners=results[0][0], losers=results[0][1], draw=False, winner_meta=alpha_meta, loser_meta=beta_meta)
+		else:
+			# Team 1 (beta) won  
+			after = m.qc.rating.rate(winners=results[0][1], losers=results[0][0], draw=False, winner_meta=beta_meta, loser_meta=alpha_meta)
+			after = after[::-1]  # Swap back to standard team order
+		results.append(after)
 
 	after = iter_to_dict((*results[-1][0], *results[-1][1]), key='user_id')
 	before = iter_to_dict((*results[0][0], *results[0][1]), key='user_id')
