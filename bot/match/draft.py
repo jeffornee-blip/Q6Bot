@@ -103,8 +103,10 @@ class Draft:
 				if len(set(self.pick_order[pick_step+1:])) == 1:
 					picker_team = self.m.teams[self.pick_order[pick_step+1]]
 					for i, remaining_player in enumerate(self.m.teams[2]):
-						# Track draft position based on global pick count (0-indexed)
-						total_picks = len(self.m.teams[0]) + len(self.m.teams[1]) - 2 + i
+						# Track draft position based on global pick count, excluding captains
+						picks_a = max(0, len(self.m.teams[0]) - 1)
+						picks_b = max(0, len(self.m.teams[1]) - 1)
+						total_picks = picks_a + picks_b + i
 						draft_pos = min(total_picks, 9)
 						self.m.draft_positions[remaining_player.id] = draft_pos
 					picker_team.extend(self.m.teams[2])
@@ -131,10 +133,13 @@ class Draft:
 		# Track draft position if moving from unpicked to a team during draft
 		if old_team is None or old_team.idx == 2:  # Was unpicked or is being moved from unpicked
 			if team.idx in [0, 1]:  # Moving to an actual team
-				# Draft position based on global pick count (0-indexed)
-				# Total picks minus 2 for captains
-				total_picks = len(self.m.teams[0]) + len(self.m.teams[1]) - 2
-				draft_pos = min(total_picks, 9)
+				# Draft position based on global pick count (0-indexed), excluding captains
+				# Each team has a captain at index [0], so picks = len - 1
+				picks_a = max(0, len(self.m.teams[0]) - 1)
+				picks_b = max(0, len(self.m.teams[1]) - 1)
+				# This player's pick index is total picks - 1 (since already added)
+				total_picks = picks_a + picks_b
+				draft_pos = min(total_picks - 1, 9)
 				self.m.draft_positions[player.id] = draft_pos
 		
 		await self.m.qc.remove_members(player, ctx=ctx)
