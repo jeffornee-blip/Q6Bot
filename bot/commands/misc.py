@@ -94,7 +94,7 @@ async def allow_offline(ctx):
 		bot.allow_offline.pop(ctx.author.id)
 		await ctx.success(ctx.qc.gt("Your offline immunity is **off**."))
 	else:
-		bot.allow_offline[ctx.author.id] = int(time()) + 10*60  # 10 minutes
+		bot.allow_offline[ctx.author.id] = True  # Persists until next match
 		await ctx.success(ctx.qc.gt("Your offline immunity is **on** until the next match."))
 
 

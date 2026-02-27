@@ -1,5 +1,4 @@
 import traceback
-from time import time
 from nextcord import ChannelType, Activity, ActivityType
 
 from core.client import dc
@@ -139,10 +138,7 @@ async def on_presence_update(before, after):
 	if after.raw_status not in ['idle', 'offline']:
 		return
 	if after.id in bot.allow_offline:
-		if bot.allow_offline[after.id] > int(time()):
-			return
-		else:
-			bot.allow_offline.pop(after.id, None)
+		return  # Player has offline immunity enabled
 
 	for qc in filter(lambda i: i.guild_id == after.guild.id, bot.queue_channels.values()):
 		if after.raw_status == "offline" and qc.cfg.remove_offline:
