@@ -8,7 +8,7 @@ from core.utils import get_nick
 async def ensure_tables():
 	"""Initialize database tables for noadds module"""
 	
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="noadds",
 		columns=[
 			dict(cname="id", ctype=db.types.int, autoincrement=True),
@@ -25,7 +25,7 @@ async def ensure_tables():
 		primary_keys=["id"]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="qc_phrases",
 		columns=[
 			dict(cname="channel_id", ctype=db.types.int),

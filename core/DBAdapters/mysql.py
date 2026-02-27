@@ -156,7 +156,21 @@ class Adapter:
 		await self.execute(request)
 
 	def ensure_table(self, table):
-		self.loop.run_until_complete(self._ensure_table(table))
+		"""Synchronous wrapper that handles both async and sync contexts"""
+		import asyncio
+		try:
+			# Check if there's a running event loop
+			loop = asyncio.get_running_loop()
+			# If we're here, we're in an async context - return a coroutine
+			return self._ensure_table(table)
+		except RuntimeError:
+			# No running event loop, we're in a sync context
+			# Create a new event loop and run the coroutine
+			loop = asyncio.new_event_loop()
+			try:
+				return loop.run_until_complete(self._ensure_table(table))
+			finally:
+				loop.close()
 
 	async def _ensure_table(self, table):
 		table = {**table_blank, **table}

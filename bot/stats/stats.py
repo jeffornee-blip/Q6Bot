@@ -13,7 +13,7 @@ from core.utils import iter_to_dict, find, get_nick
 async def ensure_tables():
 	"""Initialize all database tables needed for stats module"""
 	
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="players",
 		columns=[
 			dict(cname="user_id", ctype=db.types.int),
@@ -24,7 +24,7 @@ async def ensure_tables():
 		primary_keys=["user_id"]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="qc_players",
 		columns=[
 			dict(cname="channel_id", ctype=db.types.int),
@@ -42,7 +42,7 @@ async def ensure_tables():
 		primary_keys=["user_id", "channel_id"]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="qc_rating_history",
 		columns=[
 			dict(cname="id", ctype=db.types.int, autoincrement=True),
@@ -59,7 +59,7 @@ async def ensure_tables():
 		primary_keys=["id"]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="qc_matches",
 		columns=[
 			dict(cname="match_id", ctype=db.types.int),
@@ -78,14 +78,14 @@ async def ensure_tables():
 		primary_keys=["match_id"]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="qc_match_id_counter",
 		columns=[
 			dict(cname="next_id", ctype=db.types.int)
 		]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="qc_player_matches",
 		columns=[
 			dict(cname="match_id", ctype=db.types.int),
@@ -97,7 +97,7 @@ async def ensure_tables():
 		primary_keys=["match_id", "user_id"]
 	))
 
-	db.ensure_table(dict(
+	await db.ensure_table(dict(
 		tname="disabled_guilds",
 		columns=[
 			dict(cname="guild_id", ctype=db.types.int)
