@@ -28,6 +28,7 @@ active_matches = []
 waiting_reactions = dict()  # {message.id: function}
 allow_offline = {}  # {user_id: timestamp}
 auto_ready = dict()  # {user.id: timestamp}
+sub_tracking = dict()  # {match_id: {player_subbed_in.id: (player_subbed_out.id, series_status)}}
 
 
 def background_context(coro):

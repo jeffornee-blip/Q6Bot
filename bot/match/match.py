@@ -530,6 +530,10 @@ class Match:
 		self.queue.last_maps += self.maps
 		self.queue.last_maps = self.queue.last_maps[-len(self.maps)*self.queue.cfg.map_cooldown:]
 
+		# Clean up sub tracking data
+		if self.id in bot.sub_tracking:
+			bot.sub_tracking.pop(self.id, None)
+
 		if self.ranked:
 			await bot.stats.register_match_ranked(ctx, self)
 		else:

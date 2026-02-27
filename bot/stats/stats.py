@@ -181,6 +181,26 @@ async def register_match_ranked(ctx, m):
 		await m.qc.rating.get_players((p.id for p in m.teams[1])),
 	]]
 
+	# Handle "In Progress" substitutions for rating calculation
+	# For subs marked as "In Progress" who lose, the original player takes the MMR loss
+	alpha_ids = [p.id for p in m.teams[0]]
+	beta_ids = [p.id for p in m.teams[1]]
+	in_progress_subs_by_team = {0: {}, 1: {}}  # {team_idx: {current_player_id: original_player_id}}
+	
+	if m.id in bot.sub_tracking:
+		losing_team_idx = None if m.winner is None else (1 if m.winner == 0 else 0)
+		
+		if losing_team_idx is not None:
+			for sub_id, (original_id, status) in bot.sub_tracking[m.id].items():
+				if status == "In Progress":
+					# Find which team has this sub and if it's the losing team
+					if sub_id in alpha_ids and losing_team_idx == 0:
+						in_progress_subs_by_team[0][sub_id] = original_id
+						alpha_ids[alpha_ids.index(sub_id)] = original_id
+					elif sub_id in beta_ids and losing_team_idx == 1:
+						in_progress_subs_by_team[1][sub_id] = original_id
+						beta_ids[beta_ids.index(sub_id)] = original_id
+
 	# Build metadata for rating system
 	captains_set = {c.id for c in m.captains} if hasattr(m, 'captains') else set()
 	alpha_meta = {
@@ -194,56 +214,147 @@ async def register_match_ranked(ctx, m):
 		'captains': {c.id for c in m.captains if c in m.teams[1]} if hasattr(m, 'captains') else set()
 	}
 
+	# Get ratings for the teams used in calculation (may include original players for In Progress subs)
+	alpha_ratings = await m.qc.rating.get_players(alpha_ids)
+	beta_ratings = await m.qc.rating.get_players(beta_ids)
+
 	if m.winner is None:  # draw
-		after = m.qc.rating.rate(winners=results[0][0], losers=results[0][1], draw=True, winner_meta=alpha_meta, loser_meta=beta_meta)
+		after = m.qc.rating.rate(winners=alpha_ratings, losers=beta_ratings, draw=True, winner_meta=alpha_meta, loser_meta=beta_meta)
 		results.append(after)
 	else:  # Determine winner based on final match outcome
 		if m.winner == 0:
 			# Team 0 (alpha) won
-			after = m.qc.rating.rate(winners=results[0][0], losers=results[0][1], draw=False, winner_meta=alpha_meta, loser_meta=beta_meta)
+			after = m.qc.rating.rate(winners=alpha_ratings, losers=beta_ratings, draw=False, winner_meta=alpha_meta, loser_meta=beta_meta)
 		else:
 			# Team 1 (beta) won  
-			after = m.qc.rating.rate(winners=results[0][1], losers=results[0][0], draw=False, winner_meta=beta_meta, loser_meta=alpha_meta)
+			after = m.qc.rating.rate(winners=beta_ratings, losers=alpha_ratings, draw=False, winner_meta=beta_meta, loser_meta=alpha_meta)
 			after = after[::-1]  # Swap back to standard team order
 		results.append(after)
 
 	after = iter_to_dict((*results[-1][0], *results[-1][1]), key='user_id')
 	before = iter_to_dict((*results[0][0], *results[0][1]), key='user_id')
 
+	# For In Progress subs on losing team, add their unchanged rating to the after dict for embed display
+	# Also ensure we have before data for all current match players
+	for p in m.players:
+		if p.id not in before:
+			# Get the before data for this player in case it's missing
+			player_ratings = await m.qc.rating.get_players((p.id,))
+			if player_ratings:
+				before[p.id] = player_ratings[0]
+		
+		# Check if this player is an In Progress sub on losing team
+		if m.id in bot.sub_tracking and p.id in bot.sub_tracking[m.id]:
+			original_id, status = bot.sub_tracking[m.id][p.id]
+			if status == "In Progress":
+				losing_team_idx = None if m.winner is None else (1 if m.winner == 0 else 0)
+				team_idx = 0 if p in m.teams[0] else 1
+				if team_idx == losing_team_idx:
+					# This is an In Progress sub on losing team - they keep their unchanged rating in the embed
+					if p.id not in after:
+						after[p.id] = before[p.id]
+
+	# Process all match players
 	for p in m.players:
 		nick = get_nick(p)
 		team = 0 if p in m.teams[0] else 1
 
-		await db.update(
-			"qc_players",
-			dict(
-				nick=nick,
-				rating=after[p.id]['rating'],
-				deviation=after[p.id]['deviation'],
-				wins=after[p.id]['wins'],
-				losses=after[p.id]['losses'],
-				draws=after[p.id]['draws'],
-				streak=after[p.id]['streak'],
-				last_ranked_match_at=now,
-			),
-			keys=dict(channel_id=m.qc.rating.channel_id, user_id=p.id)
-		)
+		# Check if this player was a sub with In Progress status on the losing team
+		is_in_progress_sub = False
+		original_id = None
+		if m.id in bot.sub_tracking and p.id in bot.sub_tracking[m.id]:
+			original_id, status = bot.sub_tracking[m.id][p.id]
+			if status == "In Progress":
+				# Determine if this was the losing team
+				losing_team_idx = None if m.winner is None else (1 if m.winner == 0 else 0)
+				if team == losing_team_idx:
+					is_in_progress_sub = True
+
+		# For In Progress subs on losing team: keep their rating unchanged
+		if is_in_progress_sub:
+			current_rating = before[p.id]['rating']
+			await db.update(
+				"qc_players",
+				dict(
+					nick=nick,
+					rating=current_rating,
+					deviation=before[p.id]['deviation'],
+					wins=before[p.id]['wins'],
+					losses=before[p.id]['losses'],
+					draws=before[p.id]['draws'],
+					streak=before[p.id]['streak'],
+					last_ranked_match_at=now,
+				),
+				keys=dict(channel_id=m.qc.rating.channel_id, user_id=p.id)
+			)
+			rating_change = 0
+		else:
+			# Normal flow: apply calculated rating change
+			rating_data = after.get(p.id, before[p.id])
+			await db.update(
+				"qc_players",
+				dict(
+					nick=nick,
+					rating=rating_data['rating'],
+					deviation=rating_data['deviation'],
+					wins=rating_data['wins'],
+					losses=rating_data['losses'],
+					draws=rating_data['draws'],
+					streak=rating_data['streak'],
+					last_ranked_match_at=now,
+				),
+				keys=dict(channel_id=m.qc.rating.channel_id, user_id=p.id)
+			)
+			rating_change = rating_data['rating'] - before[p.id]['rating']
 
 		await db.insert(
 			'qc_player_matches',
 			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
 		)
+		
 		await db.insert('qc_rating_history', dict(
 			channel_id=m.qc.rating.channel_id,
 			user_id=p.id,
 			at=now,
 			rating_before=before[p.id]['rating'],
-			rating_change=after[p.id]['rating']-before[p.id]['rating'],
+			rating_change=rating_change,
 			deviation_before=before[p.id]['deviation'],
-			deviation_change=after[p.id]['deviation']-before[p.id]['deviation'],
+			deviation_change=0 if is_in_progress_sub else (after.get(p.id, before[p.id])['deviation']-before[p.id]['deviation']),
 			match_id=m.id,
 			reason=m.queue.name
 		))
+		
+		# Also update the original player's rating if this was an In Progress sub applying loss to them
+		if is_in_progress_sub and original_id and original_id in after:
+			original_before = before[original_id]
+			original_after = after[original_id]
+			
+			await db.update(
+				"qc_players",
+				dict(
+					nick=get_nick(p),
+					rating=original_after['rating'],
+					deviation=original_after['deviation'],
+					wins=original_after['wins'],
+					losses=original_after['losses'],
+					draws=original_after['draws'],
+					streak=original_after['streak'],
+					last_ranked_match_at=now,
+				),
+				keys=dict(channel_id=m.qc.rating.channel_id, user_id=original_id)
+			)
+			
+			await db.insert('qc_rating_history', dict(
+				channel_id=m.qc.rating.channel_id,
+				user_id=original_id,
+				at=now,
+				rating_before=original_before['rating'],
+				rating_change=original_after['rating']-original_before['rating'],
+				deviation_before=original_before['deviation'],
+				deviation_change=original_after['deviation']-original_before['deviation'],
+				match_id=m.id,
+				reason=f"{m.queue.name} (substitute)"
+			))
 
 	await m.qc.update_rating_roles(*m.players)
 	await m.print_rating_results(ctx, before, after)

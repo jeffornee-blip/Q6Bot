@@ -316,8 +316,9 @@ async def _report_manual(
 async def _sub_force(
 		interaction: Interaction,
 		player1: Member = SlashOption(name="player1", description="The player to substitute for.", verify=False),
-		player2: Member = SlashOption(name="player2", description="The player to substitute with.", verify=False)
-): await run_slash(bot.commands.sub_force, interaction=interaction, player1=player1, player2=player2)
+		player2: Member = SlashOption(name="player2", description="The player to substitute with.", verify=False),
+		series_status: str = SlashOption(name="series_status", description="Is this a new series or in progress?", choices=["New", "In Progress"])
+): await run_slash(bot.commands.sub_force, interaction=interaction, player1=player1, player2=player2, series_status=series_status)
 
 
 @groups.admin_match.subcommand(name='put', description='Put a player in a team.')

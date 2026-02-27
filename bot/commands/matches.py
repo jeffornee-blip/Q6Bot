@@ -53,14 +53,14 @@ async def sub_for(ctx, player: Member):
 	await match.draft.sub_for(ctx, player, ctx.author)
 
 
-async def sub_force(ctx, player1: Member, player2: Member):
+async def sub_force(ctx, player1: Member, player2: Member, series_status: str = "New"):
 	ctx.check_perms(ctx.Perms.MODERATOR)
 	if (match := find(lambda m: m.qc == ctx.qc and player1 in m.players, bot.active_matches)) is None:
 		raise bot.Exc.NotFoundError(ctx.qc.gt("Specified user is not in a match."))
 	if any((player2 in m.players for m in bot.active_matches)):
 		raise bot.Exc.InMatchError(ctx.qc.gt("Specified user is in an active match."))
 
-	await match.draft.sub_for(ctx, player1, player2, force=True)
+	await match.draft.sub_for(ctx, player1, player2, force=True, series_status=series_status)
 
 
 @author_match

@@ -72,7 +72,7 @@
 |-                      |                                                         |
 | /match report         | Report an ongoing match result as a moderator           |
 | /match create         | Manually create a rating match result                   |
-| /match sub_player     | Forcefully swap one player with another                 |
+| /match sub_player     | Substitute a player (specify 'New' or 'In Progress')    |
 | /match put            | Forcefully put a player in a team or unpicked list      |
 |-                      |                                                         |
 | /noadds list          | List banned players                                     |

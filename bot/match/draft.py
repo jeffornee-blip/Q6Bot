@@ -156,7 +156,7 @@ class Draft:
 			self.sub_queue.append(author)
 			await ctx.success(self.m.gt("You are now looking for a substitute."))
 
-	async def sub_for(self, ctx, player1, player2, force=False):
+	async def sub_for(self, ctx, player1, player2, force=False, series_status="New"):
 		if self.m.state not in [self.m.CHECK_IN, self.m.DRAFT, self.m.WAITING_REPORT]:
 			raise bot.Exc.MatchStateError(self.m.gt("The match must be on the check-in, draft or waiting report stage."))
 		elif not force and player1 not in self.sub_queue:
@@ -168,6 +168,12 @@ class Draft:
 		self.m.players.append(player2)
 		if player1 in self.sub_queue:
 			self.sub_queue.remove(player1)
+		
+		# Track the substitution for MMR purposes
+		if self.m.id not in bot.sub_tracking:
+			bot.sub_tracking[self.m.id] = {}
+		bot.sub_tracking[self.m.id][player2.id] = (player1.id, series_status)
+		
 		self.m.ratings = {
 			p['user_id']: p['rating'] for p in await self.m.qc.rating.get_players((p.id for p in self.m.players))
 		}
