@@ -437,7 +437,8 @@ class PickupQueue:
 				queue=self.name,
 				channel=ctx.channel.mention,
 				server=self.cfg.server
-			))
+			)),
+			calling_queue=self
 		)
 		if self.cfg.team_size:
 			team_size = min(int(self.cfg.size / 2), int(self.cfg.team_size))
@@ -466,7 +467,8 @@ class PickupQueue:
 					queue=self.name,
 					channel=ctx.channel.mention,
 					server=self.cfg.server
-				))
+				)),
+				calling_queue=self
 			)
 
 			await bot.Match.new(ctx, self, group, team_size=group_size//2, **self._match_cfg())

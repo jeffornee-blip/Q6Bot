@@ -429,8 +429,14 @@ class QueueChannel:
 		for q in (q for q in self.queues if q.length):
 			# Skip high-priority queues if filtering is enabled
 			if skip_high_priority and calling_priority is not None:
-				if hasattr(q.cfg, 'priority') and q.cfg.priority > calling_priority:
-					continue
+				try:
+					q_priority = q.cfg.priority
+					if q_priority > calling_priority:
+						continue
+				except (AttributeError, KeyError, TypeError):
+					# Queue doesn't have priority set, treat as priority 0
+					if calling_priority < 0:
+						continue
 			affected.update(q.pop_members(*members))
 
 		if len(affected):
@@ -551,15 +557,22 @@ class QueueChannel:
 
 			await asyncio.sleep(1)
 
-	async def queue_started(self, ctx, members, message=None):
-		await self.remove_members(*members, ctx=ctx)
+	async def queue_started(self, ctx, members, message=None, calling_queue=None):
+		# Extract calling_priority for priority-aware queue removal
+		calling_priority = None
+		if calling_queue:
+			try:
+				calling_priority = calling_queue.cfg.priority
+			except (AttributeError, KeyError):
+				calling_priority = None
+		
+		# Remove members from this channel's queues, respecting priority
+		await self.remove_members(*members, ctx=ctx, skip_high_priority=(calling_priority is not None), calling_priority=calling_priority)
 
 		if message:
 			asyncio.create_task(self._dm_members(members, message))
 
-		# Pass the calling queue's priority to remove_players
-		calling_queue = ctx.queue if hasattr(ctx, 'queue') else None
-		calling_priority = calling_queue.cfg.priority if calling_queue and hasattr(calling_queue.cfg, 'priority') else None
+		# Remove players from ALL channels' queues, respecting priority
 		await bot.remove_players(*members, reason="pickup started", calling_priority=calling_priority)
 
 	async def _dm_members(self, members, *args, **kwargs):

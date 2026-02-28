@@ -63,9 +63,10 @@ async def run_slash_coro(ctx: SlashContext, coro: Callable, **kwargs):
 		await ctx.error(str(e), title=e.__class__.__name__)
 	except Exception as e:
 		await ctx.error(str(e), title="RuntimeError")
+		qc_id = ctx.qc.id if hasattr(ctx, 'qc') and ctx.qc else "unknown"
 		log.error("\n".join([
 			f"Error processing /slash command {coro.__name__}.",
-			f"QC: {ctx.channel.guild.name}>#{ctx.channel.name} ({qc.id}).",
+			f"QC: {ctx.channel.guild.name}>#{ctx.channel.name} ({qc_id}).",
 			f"Member: {ctx.author} ({ctx.author.id}).",
 			f"Kwargs: {kwargs}.",
 			f"Exception: {str(e)}. Traceback:\n{traceback.format_exc()}=========="

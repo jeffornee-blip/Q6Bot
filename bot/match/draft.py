@@ -178,7 +178,14 @@ class Draft:
 			p['user_id']: p['rating'] for p in await self.m.qc.rating.get_players((p.id for p in self.m.players))
 		}
 		await self.m.qc.remove_members(player2, ctx=ctx)
-		await bot.remove_players(player2, reason="pickup started")
+		
+		# Pass the match queue's priority for priority-aware removal
+		calling_priority = None
+		try:
+			calling_priority = self.m.queue.cfg.priority
+		except (AttributeError, KeyError):
+			calling_priority = None
+		await bot.remove_players(player2, reason="pickup started", calling_priority=calling_priority)
 
 		if self.m.state == self.m.CHECK_IN:
 			await self.m.check_in.refresh()

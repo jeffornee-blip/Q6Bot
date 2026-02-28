@@ -155,10 +155,17 @@ async def register_match_unranked(ctx, m):
 			team = None
 
 		is_captain = 1 if p in m.captains else 0
-		await db.insert(
-			'qc_player_matches',
-			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
-		)
+		try:
+			await db.insert(
+				'qc_player_matches',
+				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
+			)
+		except Exception:
+			# Fallback if is_captain column doesn't exist
+			await db.insert(
+				'qc_player_matches',
+				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
+			)
 
 
 async def register_match_ranked(ctx, m):
@@ -309,10 +316,17 @@ async def register_match_ranked(ctx, m):
 			)
 			rating_change = rating_data['rating'] - before[p.id]['rating']
 
-		await db.insert(
-			'qc_player_matches',
-			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
-		)
+		try:
+			await db.insert(
+				'qc_player_matches',
+				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
+			)
+		except Exception:
+			# Fallback if is_captain column doesn't exist
+			await db.insert(
+				'qc_player_matches',
+				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
+			)
 		
 		await db.insert('qc_rating_history', dict(
 			channel_id=m.qc.rating.channel_id,
