@@ -82,13 +82,13 @@ class Match:
 		recent_captains = set()
 		if match.cfg['pick_captains'] == "smart":
 			try:
-				recent_matches = await db.select(
+				recent_captains_data = await db.select(
 					('user_id',), 'qc_player_matches',
-					where={'channel_id': ctx.qc.id},
+					where={'channel_id': ctx.qc.id, 'is_captain': 1},
 					order_by='match_id DESC',
-					limit=60  # Check last ~6 matches (10 players per match)
+					limit=6  # Check recent captains from last ~3 matches
 				)
-				recent_captains = {m['user_id'] for m in recent_matches[:20]}  # Top 20 most recent
+				recent_captains = {m['user_id'] for m in recent_captains_data}
 			except:
 				pass  # If query fails, continue without recent captains history
 		
@@ -244,7 +244,7 @@ class Match:
 		1. Both have @captain role (+1000)
 		2. Similar MMR (closer = higher score, max +500)
 		3. Share Quidditch role (+200)
-		4. Deprioritize recent captains (-100 each)
+		4. Deprioritize recent captains (-300 each)
 		"""
 		score = 0
 		
@@ -263,9 +263,9 @@ class Match:
 		
 		# Priority 4: Deprioritize recent captains
 		if p1.id in recent_captains:
-			score -= 100
+			score -= 300
 		if p2.id in recent_captains:
-			score -= 100
+			score -= 300
 		
 		return score
 

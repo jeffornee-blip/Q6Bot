@@ -154,9 +154,10 @@ async def register_match_unranked(ctx, m):
 		else:
 			team = None
 
+		is_captain = 1 if p in m.captains else 0
 		await db.insert(
 			'qc_player_matches',
-			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
+			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
 		)
 
 
@@ -258,6 +259,7 @@ async def register_match_ranked(ctx, m):
 	for p in m.players:
 		nick = get_nick(p)
 		team = 0 if p in m.teams[0] else 1
+		is_captain = 1 if p in m.captains else 0
 
 		# Check if this player was a sub with In Progress status on the losing team
 		is_in_progress_sub = False
@@ -309,7 +311,7 @@ async def register_match_ranked(ctx, m):
 
 		await db.insert(
 			'qc_player_matches',
-			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
+			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
 		)
 		
 		await db.insert('qc_rating_history', dict(

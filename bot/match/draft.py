@@ -90,10 +90,13 @@ class Draft:
 			self.m.teams[2].remove(player)
 			team.append(player)
 			
-			# Track draft position based on round (ABBABABABA = 2 players per round)
-			# Total picks made before this pick is used to determine which round
-			draft_round = total_picks // 2
-			draft_position = min(draft_round, 4)  # Cap at 4 (5th pick tier)
+			# Track draft position counting turns (groups of same team picks)
+			# Count how many times the pick_order changes from start to this pick
+			turn = 0
+			for i in range(pick_step):
+				if i == 0 or self.pick_order[i] != self.pick_order[i-1]:
+					turn += 1
+			draft_position = min(turn, 9)
 			self.m.draft_positions[player.id] = draft_position
 
 			# auto last-pick rest of the players if possible
@@ -103,11 +106,8 @@ class Draft:
 				if len(set(self.pick_order[pick_step+1:])) == 1:
 					picker_team = self.m.teams[self.pick_order[pick_step+1]]
 					for i, remaining_player in enumerate(self.m.teams[2]):
-						# Track draft position based on global pick count, excluding captains
-						picks_a = max(0, len(self.m.teams[0]) - 1)
-						picks_b = max(0, len(self.m.teams[1]) - 1)
-						total_picks = picks_a + picks_b + i
-						draft_pos = min(total_picks, 9)
+						# Auto-placed players are the final pick(s) - pick index 9 (10th pick)
+						draft_pos = 9
 						self.m.draft_positions[remaining_player.id] = draft_pos
 					picker_team.extend(self.m.teams[2])
 					self.m.teams[2].clear()
