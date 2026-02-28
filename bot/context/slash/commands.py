@@ -658,14 +658,11 @@ async def _rating_unhide(
 @dc.slash_command(name='auto_ready', description='Confirm next match check-in automatically.', **guild_kwargs)
 async def _auto_ready(
 		interaction: Interaction,
-		duration: str = SlashOption(required=False),
 ):
-	async def _run(ctx, *args, _duration=None, **kwargs):
-		if _duration:
-			_duration = _parse_duration(ctx, _duration)
-		await bot.commands.auto_ready(ctx, *args, duration=_duration, **kwargs)
+	async def _run(ctx, *args, **kwargs):
+		await bot.commands.auto_ready(ctx, *args, **kwargs)
 
-	await run_slash(_run, interaction=interaction, _duration=duration)
+	await run_slash(_run, interaction=interaction)
 
 
 @dc.slash_command(name='expire', description='Set or show your current expire timer.', **guild_kwargs)

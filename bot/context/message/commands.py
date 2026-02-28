@@ -190,13 +190,7 @@ async def _expire(ctx: MessageContext, args: str = None):
 
 @message_command('auto_ready', 'ar')
 async def _auto_ready(ctx: MessageContext, args: str = None):
-	duration = None
-	if args:
-		try:
-			duration = parse_duration(args)
-		except ValueError:
-			raise bot.Exc.SyntaxError(ctx.qc.gt("Invalid duration format. Syntax: 3h2m1s or 03:02:01."))
-	await bot.commands.auto_ready(ctx, duration=duration)
+	await bot.commands.auto_ready(ctx)
 
 
 @message_command('rank')

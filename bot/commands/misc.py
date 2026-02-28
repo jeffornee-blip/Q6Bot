@@ -13,25 +13,16 @@ import bot
 MAX_EXPIRE_TIME = timedelta(hours=12)
 
 
-async def auto_ready(ctx, duration: timedelta = None):
-	if not duration:
-		duration = timedelta(seconds=min([60*5, ctx.qc.cfg.max_auto_ready]))
-
-	if duration.total_seconds() > ctx.qc.cfg.max_auto_ready:
-		raise ctx.Exc.ValueError(ctx.qc.gt("Maximum auto_ready duration is {duration}.").format(
-			duration=seconds_to_str(ctx.qc.cfg.max_auto_ready)
-		))
-
+async def auto_ready(ctx):
 	if ctx.author.id in bot.auto_ready.keys():
 		bot.auto_ready.pop(ctx.author.id)
 		await ctx.success(ctx.qc.gt("Your automatic ready confirmation is now turned off."))
 		return
 
-	bot.auto_ready[ctx.author.id] = int(time()) + duration.total_seconds()
+	duration = 10 * 60  # 10 minutes
+	bot.auto_ready[ctx.author.id] = int(time()) + duration
 	await ctx.success(
-		ctx.qc.gt("During next {duration} your match participation will be confirmed automatically.").format(
-			duration=duration.__str__()
-		)
+		ctx.qc.gt("Your match participation will be confirmed automatically for the next 10 minutes.")
 	)
 
 
