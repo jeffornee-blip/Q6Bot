@@ -53,6 +53,16 @@ class PickupQueue:
 				description="Enable rating features on this queue.",
 				notnull=True
 			),
+			Variables.IntVar(
+				"priority",
+				display="Queue priority",
+				section="General",
+				default=0,
+				verify=lambda i: 0 <= i <= 100,
+				verify_message="Priority must be between 0 and 100.",
+				description="Higher priority queues remove players from lower priority ones. Recommended: Ranked=100, Casual=0",
+				notnull=True
+			),
 			Variables.BoolVar(
 				"autostart",
 				display="Start when full",

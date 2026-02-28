@@ -424,9 +424,13 @@ class QueueChannel:
 		else:
 			return "> [" + " | ".join([f"**{q.name}** ({q.status})" for q in populated]) + "]"
 
-	async def remove_members(self, *members, ctx=None, reason=None, highlight=False):
+	async def remove_members(self, *members, ctx=None, reason=None, highlight=False, skip_high_priority=False, calling_priority=None):
 		affected = set()
 		for q in (q for q in self.queues if q.length):
+			# Skip high-priority queues if filtering is enabled
+			if skip_high_priority and calling_priority is not None:
+				if hasattr(q.cfg, 'priority') and q.cfg.priority > calling_priority:
+					continue
 			affected.update(q.pop_members(*members))
 
 		if len(affected):
@@ -553,7 +557,10 @@ class QueueChannel:
 		if message:
 			asyncio.create_task(self._dm_members(members, message))
 
-		await bot.remove_players(*members, reason="pickup started")
+		# Pass the calling queue's priority to remove_players
+		calling_queue = ctx.queue if hasattr(ctx, 'queue') else None
+		calling_priority = calling_queue.cfg.priority if calling_queue and hasattr(calling_queue.cfg, 'priority') else None
+		await bot.remove_players(*members, reason="pickup started", calling_priority=calling_priority)
 
 	async def _dm_members(self, members, *args, **kwargs):
 		for m in members:

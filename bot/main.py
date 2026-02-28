@@ -103,9 +103,19 @@ async def load_state():
 		log.info(f"Countdown channel loaded: {bot.scheduler.countdown_channel_id}")
 
 
-async def remove_players(*users, reason=None):
+async def remove_players(*users, reason=None, calling_priority=None):
+	"""Remove players from queues based on priority.
+	
+	If calling_priority is None, removes from all queues (backward compatible).
+	If calling_priority is set, only removes from queues with priority <= calling_priority.
+	"""
 	for qc in set((q.qc for q in bot.active_queues)):
-		await qc.remove_members(*users, reason=reason)
+		await qc.remove_members(
+			*users, 
+			reason=reason,
+			skip_high_priority=(calling_priority is not None),
+			calling_priority=calling_priority
+		)
 
 
 async def expire_auto_ready(frame_time):
