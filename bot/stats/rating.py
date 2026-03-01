@@ -96,7 +96,8 @@ class BaseRating:
 				dict(
 					channel_id=self.channel_id, nick=get_nick(member), user_id=member.id,
 					rating=rating, deviation=deviation or self.init_deviation
-				)
+				),
+				on_dublicate='replace'
 			)
 			old = dict(rating=self.init_rp, deviation=self.init_deviation)
 		else:
@@ -116,7 +117,8 @@ class BaseRating:
 				deviation_before=old['deviation'], rating_change=rating-old['rating'],
 				deviation_change=deviation-old['deviation'] if deviation else 0,
 				match_id=None, reason=reason
-			)
+			),
+			on_dublicate='ignore'
 		)
 
 	async def hide_player(self, user_id, hide=True):

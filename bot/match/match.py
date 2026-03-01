@@ -362,8 +362,10 @@ class Match:
 				await self.final_message(ctx)
 			await self.finish_match(ctx)
 
-	def rank_str(self, member):
-		return self.queue.qc.rating_rank(self.ratings[member.id])['rank']
+	def rank_str(self, member, rating=None):
+		if rating is None:
+			rating = self.ratings[member.id]
+		return self.queue.qc.rating_rank(rating)['rank']
 
 	async def start_waiting_report(self, ctx):
 		# remove never picked players from the match
@@ -458,11 +460,11 @@ class Match:
 		if len(winners) == 1 and len(losers) == 1:
 			p = winners[0]
 			winner_diff = after[p.id]['rating'] - before[p.id]['rating']
-			winner_text = f"{self.rank_str(p)} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({winner_diff:+d})"
+			winner_text = f"{self.rank_str(p, after[p.id]['rating'])} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({winner_diff:+d})"
 			
 			p = losers[0]
 			loser_diff = after[p.id]['rating'] - before[p.id]['rating']
-			loser_text = f"{self.rank_str(p)} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({loser_diff:+d})"
+			loser_text = f"{self.rank_str(p, after[p.id]['rating'])} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({loser_diff:+d})"
 			
 			embed.add_field(name="🏆 Winner", value=winner_text, inline=False)
 			embed.add_field(name="——————————", value="\u200b", inline=False)
@@ -479,7 +481,7 @@ class Match:
 				team_players = []
 				for p in team:
 					player_diff = after[p.id]['rating'] - before[p.id]['rating']
-					team_players.append(f"{self.rank_str(p)} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({player_diff:+d})")
+					team_players.append(f"{self.rank_str(p, after[p.id]['rating'])} {get_nick(p)}\u200b \u200b {before[p.id]['rating']} ⟼ {after[p.id]['rating']} ({player_diff:+d})")
 				
 				embed.add_field(name=team_header, value="\n".join(team_players), inline=False)
 				
@@ -502,9 +504,9 @@ class Match:
 
 			if len(winners) == 1 and len(losers) == 1:
 				p = winners[0]
-				msg += f"\n1. {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
+				msg += f"\n1. {self.rank_str(p, after[p.id]['rating'])} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
 				p = losers[0]
-				msg += f"\n2. {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
+				msg += f"\n2. {self.rank_str(p, after[p.id]['rating'])} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}"
 			else:
 				n = 0
 				for team in (winners, losers):
@@ -512,7 +514,7 @@ class Match:
 					avg_af = int(sum((after[p.id]['rating'] for p in team))/len(team))
 					msg += f"\n{n}. {team.name} {avg_bf} ⟼ {avg_af}\n"
 					msg += "\n".join(
-						(f"> {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}" for p in team)
+						(f"> {self.rank_str(p, after[p.id]['rating'])} {get_nick(p)} {before[p.id]['rating']} ⟼ {after[p.id]['rating']}" for p in team)
 					)
 					n += 1
 			msg += "```"
