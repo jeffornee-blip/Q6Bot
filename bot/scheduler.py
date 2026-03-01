@@ -5,6 +5,7 @@ from datetime import datetime
 from nextcord import Embed, Color
 from core.client import dc
 from core.console import log
+from . import main as bot_main
 
 
 class Scheduler:
@@ -21,12 +22,17 @@ class Scheduler:
 		self.last_alert_resend_time = 0  # Track when alert was last resent
 		self.last_triggered_minute = None
 		self.timer_task = None
+		self.state_save_task = None  # Task for periodic state saving
 
 	def start(self):
-		"""Start the dedicated timer task"""
+		"""Start the dedicated timer task and state save task"""
 		if self.timer_task is None or self.timer_task.done():
 			self.timer_task = asyncio.create_task(self._timer_loop())
 			log.info("Countdown scheduler timer started")
+		
+		if self.state_save_task is None or self.state_save_task.done():
+			self.state_save_task = asyncio.create_task(self._state_save_loop())
+			log.info("Periodic state save task started")
 
 	async def _timer_loop(self):
 		"""Dedicated task that triggers at exact :33 mark to start countdown and :42 to end"""
@@ -50,6 +56,19 @@ class Scheduler:
 			except Exception as e:
 				log.error(f"Error in countdown timer loop: {e}")
 				# Wait 30 seconds before retrying
+				await asyncio.sleep(30)
+
+	async def _state_save_loop(self):
+		"""Periodic task that saves bot state every 30 seconds"""
+		while True:
+			try:
+				# Sleep 30 seconds between saves
+				await asyncio.sleep(30)
+				# Save state without blocking
+				bot_main.save_state()
+			except Exception as e:
+				log.error(f"Error in state save loop: {e}")
+				# Continue trying even if save fails
 				await asyncio.sleep(30)
 
 	async def think(self, frame_time):
