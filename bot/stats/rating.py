@@ -313,12 +313,12 @@ class Quidditch6v6Rating(BaseRating):
 	"""
 	Competitive Quidditch 6v6 rating system with draft position and captain weighting.
 	Draft picks: 1st=1.3x, 2nd=1.2x, 3rd=1.15x, 4th=1.1x, 5th=1.0x
-	Captains: +1.15x multiplier
+	Captains: +1.35x multiplier
 	"""
 
 	DRAFT_MULTIPLIERS = [1.30, 1.25, 1.20, 1.15, 1.10, 1.05, 1.00, 0.95, 0.90, 0.90]  # For turns 0-9
 
-	CAPTAIN_MULTIPLIER = 1.15
+	CAPTAIN_MULTIPLIER = 1.35
 	MIN_GAIN = 10
 	MIN_LOSS = 10
 	K_FACTOR = 48

@@ -712,6 +712,20 @@ async def _cointoss(
 		side: str = SlashOption(choices=['heads', 'tails'], required=False)
 ): await run_slash(bot.commands.cointoss, interaction=interaction, side=side)
 
+@dc.slash_command(name='denji', description='Wideboink cat.', **guild_kwargs)
+async def _denji(
+		interaction: Interaction
+): await run_slash(bot.commands.denji, interaction=interaction)
+
+@dc.slash_command(name='glas', description='LeBron jam.', **guild_kwargs)
+async def _glas(
+		interaction: Interaction
+): await run_slash(bot.commands.glas, interaction=interaction)
+
+@dc.slash_command(name='oda', description='Kanye listening party.', **guild_kwargs)
+async def _oda(
+		interaction: Interaction
+): await run_slash(bot.commands.oda, interaction=interaction)
 
 @dc.slash_command(name='help', description='Show channel or queue help.', **guild_kwargs)
 async def _help(

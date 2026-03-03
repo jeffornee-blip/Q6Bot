@@ -48,6 +48,9 @@
 | command               | description                                             |
 |-----------------------|---------------------------------------------------------|
 | /cointoss             | Flip a coin                                             |
+| /denji                | Wideboink cat                                           |
+| /glas                 | LeBron jam                                              |
+| /oda                  | Kanye listening party                                   |
 | /help                 | Show channel or queue help                              |
 
 #### Administration and Moderation
