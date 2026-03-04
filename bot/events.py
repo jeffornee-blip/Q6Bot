@@ -116,7 +116,7 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 		# Send deployment message
-		message = "Okay the leaderboards should be fixed fr fr. Skinny if you read this, you are the reason I quit. Thanks for ruining quidditch. You may have to re /add and start the countdown again."
+		message = "sorry.. one more try on /leaderboard. i think its broken cuz it sees jbj in the top 12."
 		channel = dc.get_channel(1466135433959309457)
 		if channel:
 			try:
