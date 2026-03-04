@@ -33,13 +33,16 @@ log = console.log
 
 # Setup signal handlers
 original_SIGINT_handler = signal.getsignal(signal.SIGINT)
+original_SIGTERM_handler = signal.getsignal(signal.SIGTERM)
 
-def ctrl_c(sig, frame):
+def shutdown_handler(sig, frame):
 	bot.save_state()
 	console.terminate()
 	signal.signal(signal.SIGINT, original_SIGINT_handler)
+	signal.signal(signal.SIGTERM, original_SIGTERM_handler)
 
-signal.signal(signal.SIGINT, ctrl_c)
+signal.signal(signal.SIGINT, shutdown_handler)
+signal.signal(signal.SIGTERM, shutdown_handler)
 
 # Run commands from user console
 async def run_console():

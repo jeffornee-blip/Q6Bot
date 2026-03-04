@@ -115,16 +115,6 @@ async def on_ready():
 		bot.bot_was_ready = True
 		bot.bot_ready = True
 		log.info("Done.")
-		# Send deployment message
-		message = "if this doesn't work im going to bed"
-		channel = dc.get_channel(1466135433959309457)
-		if channel:
-			try:
-				await channel.send(message)
-			except Exception as e:
-				log.error(f"Failed to send deployment message: {e}")
-		else:
-			log.error("Deployment message channel not found.")
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")
