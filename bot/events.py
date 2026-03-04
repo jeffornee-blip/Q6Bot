@@ -118,6 +118,20 @@ async def on_ready():
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")
+		# Send reconnection message to specific channel
+		message = (
+			"Captain logic has been updated to include flex players. "
+			"/leaderboard and /season_leaderboard have been updated to function better on mobile devices. "
+			"Rajon sends his regards to everyone but MagikMikes."
+		)
+		channel = dc.get_channel(1466135433959309457)
+		if channel:
+			try:
+				await channel.send(message)
+			except Exception as e:
+				log.error(f"Failed to send reconnection message: {e}")
+		else:
+			log.error("Reconnection message channel not found.")
 
 
 @dc.event

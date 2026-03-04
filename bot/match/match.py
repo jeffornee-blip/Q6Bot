@@ -79,7 +79,7 @@ class Match:
 		match.maps = match.random_maps(match.cfg['maps'], match.cfg['map_count'], queue.last_maps)
 		
 		# Get recent captains for smart captain selection (last 10 matches)
-		recent_captains = set()
+		recent_captains = {}
 		if match.cfg['pick_captains'] == "smart":
 			try:
 				recent_captains_data = await db.select(
@@ -88,7 +88,10 @@ class Match:
 					order_by='match_id DESC',
 					limit=6  # Check recent captains from last ~3 matches
 				)
-				recent_captains = {m['user_id'] for m in recent_captains_data}
+				# Count occurrences of each captain
+				for m in recent_captains_data:
+					user_id = m['user_id']
+					recent_captains[user_id] = recent_captains.get(user_id, 0) + 1
 			except:
 				pass  # If query fails, continue without recent captains history
 		
@@ -228,10 +231,30 @@ class Match:
 	def _get_quidditch_role(self, member):
 		"""Get Quidditch position from member's roles"""
 		role_names = [r.name.lower() for r in member.roles]
-		for role in ['keeper', 'seeker', 'beater', 'chaser']:
+		for role in ['keeper', 'seeker', 'beater', 'chaser', 'flex']:
 			if role in role_names:
 				return role
 		return 'chaser'  # Default
+
+	def _get_quidditch_role_bonus(self, role1, role2):
+		"""Calculate bonus for Quidditch role compatibility.
+		
+		Returns:
+		- +300: Exact matching roles (Keeper+Keeper, Seeker+Seeker, Beater+Beater, Chaser+Chaser, Flex+Flex)
+		- +200: Flex paired with Keeper, Seeker, or Beater
+		- 0: All other combinations (Flex + Chaser, different specialized roles, etc.)
+		"""
+		if role1 == role2:
+			# Exact match: both same role
+			return 300
+		
+		# Flex is compatible with Keeper, Seeker, Beater (but not Chaser)
+		if 'flex' in (role1, role2):
+			other_role = role2 if role1 == 'flex' else role1
+			if other_role in ['keeper', 'seeker', 'beater']:
+				return 200
+		
+		return 0
 
 	def _has_captain_role(self, member):
 		"""Check if member has captain role"""
@@ -248,24 +271,28 @@ class Match:
 		"""
 		score = 0
 		
-		# Priority 1: Both have captain role
-		if self._has_captain_role(p1) and self._has_captain_role(p2):
+		# Priority 1: Captain role bonus
+		captain_count = sum([self._has_captain_role(p1), self._has_captain_role(p2)])
+		if captain_count == 2:
 			score += 1000
+		elif captain_count == 1:
+			score += 300
 		
 		# Priority 2: Similar MMR (same team should be balanced)
 		mmr_diff = abs(self.ratings[p1.id] - self.ratings[p2.id])
-		mmr_similarity = max(0, 500 - (mmr_diff / 10))  # Penalize large differences
+		mmr_similarity = max(0, 300 - (mmr_diff * 3 / 10))  # 300 at 0 diff, 0 at 1000 diff
 		score += mmr_similarity
 		
 		# Priority 3: Share Quidditch role
-		if self._get_quidditch_role(p1) == self._get_quidditch_role(p2):
-			score += 200
+		role1 = self._get_quidditch_role(p1)
+		role2 = self._get_quidditch_role(p2)
+		score += self._get_quidditch_role_bonus(role1, role2)
 		
-		# Priority 4: Deprioritize recent captains
+		# Priority 4: Deprioritize recent captains (-300 per appearance)
 		if p1.id in recent_captains:
-			score -= 300
+			score -= 300 * recent_captains[p1.id]
 		if p2.id in recent_captains:
-			score -= 300
+			score -= 300 * recent_captains[p2.id]
 		
 		return score
 

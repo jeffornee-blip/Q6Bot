@@ -174,10 +174,9 @@ async def leaderboard(ctx, page: int = 1):
 			inline=True
 		)
 		embed.add_field(
-			name="W / L / D",
+			name="W-L",
 			value="\n".join(
-				f"**{row['wins']}** / **{row['losses']}** / **{row['draws']}** ("
-				+ str(int(row['wins'] * 100 / ((row['wins'] + row['losses']) or 1))) + "%)"
+				f"**{row['wins']}**-**{row['losses']}**"
 				for row in data
 			),
 			inline=True
@@ -196,18 +195,15 @@ async def leaderboard(ctx, page: int = 1):
 	# display as md table
 	await ctx.reply(
 		discord_table(
-			["№", "Rating〈Ξ〉", "Nickname", "Matches", "W/L/D"],
+			["№", "Nickname", "W-L", "Rating"],
 			[[
 				(page * 12) + (n + 1),
-				str(data[n]['rating']) + ctx.qc.rating_rank(data[n]['rating'])['rank'],
-				data[n]['nick'].strip(),
-				int(data[n]['wins'] + data[n]['losses'] + data[n]['draws']),
-				"{0}/{1}/{2} ({3}%)".format(
+				data[n]['nick'].strip()[:15],
+				"{0}-{1}".format(
 					data[n]['wins'],
-					data[n]['losses'],
-					data[n]['draws'],
-					int(data[n]['wins'] * 100 / ((data[n]['wins'] + data[n]['losses']) or 1))
-				)
+					data[n]['losses']
+				),
+				str(data[n]['rating']) + ctx.qc.rating_rank(data[n]['rating'])['rank']
 			] for n in range(len(data))]
 		)
 	)
@@ -234,10 +230,9 @@ async def season_leaderboard(ctx, page: int = 1):
 			inline=True
 		)
 		embed.add_field(
-			name="W / L / D",
+			name="W-L",
 			value="\n".join(
-				f"**{row['wins']}** / **{row['losses']}** / **{row['draws']}** ("
-				+ str(int(row['wins'] * 100 / ((row['wins'] + row['losses']) or 1))) + "%)"
+				f"**{row['wins']}**-**{row['losses']}**"
 				for row in data
 			),
 			inline=True
@@ -256,18 +251,15 @@ async def season_leaderboard(ctx, page: int = 1):
 	# display as md table
 	await ctx.reply(
 		discord_table(
-			["№", "Rating〈Ξ〉", "Nickname", "Matches", "W/L/D"],
+			["№", "Nickname", "W-L", "Rating"],
 			[[
 				(page * 12) + (n + 1),
-				str(data[n]['rating']) + ctx.qc.rating_rank(data[n]['rating'])['rank'],
-				data[n]['nick'].strip(),
-				int(data[n]['wins'] + data[n]['losses'] + data[n]['draws']),
-				"{0}/{1}/{2} ({3}%)".format(
+				data[n]['nick'].strip()[:15],
+				"{0}-{1}".format(
 					data[n]['wins'],
-					data[n]['losses'],
-					data[n]['draws'],
-					int(data[n]['wins'] * 100 / ((data[n]['wins'] + data[n]['losses']) or 1))
-				)
+					data[n]['losses']
+				),
+				str(data[n]['rating']) + ctx.qc.rating_rank(data[n]['rating'])['rank']
 			] for n in range(len(data))]
 		)
 	)
