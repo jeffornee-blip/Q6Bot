@@ -165,8 +165,8 @@ async def leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Leaderboard - page {page+1} of {pages}", colour=Colour(0x7289DA))
-		# Format with proper column alignment
-		table_lines = ["No Nickname              W-L    Rating"]
+		# Format as code block for mobile-friendly layout with proper alignment
+		table_lines = ["No Nickname              W-L    Rank  Rating"]
 		for n in range(len(data)):
 			row = data[n]
 			num = str((page*12)+n+1).rjust(2)
@@ -175,6 +175,14 @@ async def leaderboard(ctx, page: int = 1):
 			rating = str(row['rating']).rjust(4)
 			rank = ctx.qc.rating_rank(row['rating'])['rank']
 			table_lines.append(f"{num} {nick} {wl}  {rank}  {rating}")
+		
+		embed.add_field(
+			name="—",
+			value="```\n" + "\n".join(table_lines) + "\n```",
+			inline=False
+		)
+		await ctx.reply(embed=embed)
+		return
 		
 		embed.add_field(
 			name="—",
@@ -213,8 +221,8 @@ async def season_leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Season Leaderboard (20+ games) - page {page+1} of {pages}", colour=Colour(0x7289DA))
-		# Format with proper column alignment
-		table_lines = ["No Nickname              W-L    Rating"]
+		# Format as code block for mobile-friendly layout with proper alignment
+		table_lines = ["No Nickname              W-L    Rank  Rating"]
 		for n in range(len(data)):
 			row = data[n]
 			num = str((page*12)+n+1).rjust(2)
@@ -223,6 +231,14 @@ async def season_leaderboard(ctx, page: int = 1):
 			rating = str(row['rating']).rjust(4)
 			rank = ctx.qc.rating_rank(row['rating'])['rank']
 			table_lines.append(f"{num} {nick} {wl}  {rank}  {rating}")
+		
+		embed.add_field(
+			name="—",
+			value="```\n" + "\n".join(table_lines) + "\n```",
+			inline=False
+		)
+		await ctx.reply(embed=embed)
+		return
 		
 		embed.add_field(
 			name="—",

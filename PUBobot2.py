@@ -36,7 +36,9 @@ original_SIGINT_handler = signal.getsignal(signal.SIGINT)
 original_SIGTERM_handler = signal.getsignal(signal.SIGTERM)
 
 def shutdown_handler(sig, frame):
+	log.info(f"=== SHUTDOWN SIGNAL {sig} RECEIVED - SAVING STATE ===")
 	bot.save_state()
+	log.info("State save complete, terminating...")
 	console.terminate()
 	signal.signal(signal.SIGINT, original_SIGINT_handler)
 	signal.signal(signal.SIGTERM, original_SIGTERM_handler)

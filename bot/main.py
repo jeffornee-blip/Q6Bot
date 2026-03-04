@@ -52,7 +52,7 @@ def update_rating_system(qc_cfg):
 
 
 def save_state():
-	log.info("Saving state...")
+	log.info("Saving state to database...")
 	queues = []
 	for qc in bot.queue_channels.values():
 		for q in qc.queues:
@@ -63,44 +63,78 @@ def save_state():
 	for match in bot.active_matches:
 		matches.append(match.serialize())
 
-	f = open("saved_state.json", 'w')
-	f.write(json.dumps(dict(queues=queues, matches=matches, allow_offline=bot.allow_offline, expire=bot.expire.serialize(), countdown_channel_id=bot.scheduler.countdown_channel_id)))
-	f.close()
+	try:
+		# Clear old state
+		db.delete('bot_state', where={'id': 'queue_state'})
+		
+		# Save new state
+		db.insert('bot_state', dict(
+			id='queue_state',
+			data=json.dumps(dict(
+				queues=queues, 
+				matches=matches, 
+				allow_offline=bot.allow_offline, 
+				expire=bot.expire.serialize(), 
+				countdown_channel_id=bot.scheduler.countdown_channel_id
+			))
+		))
+		log.info(f"State saved successfully to database. {len(queues)} queues, {len(matches)} matches.")
+	except Exception as e:
+		log.error(f"Failed to save state: {e}")
 
 
 async def load_state():
 	try:
-		with open("saved_state.json", "r") as f:
-			data = json.loads(f.read())
-	except IOError:
-		return
-
-	log.info("Loading state...")
-
-	bot.allow_offline = {}  # Initialize as empty dict; timestamps don't persist across restarts
-
-
-	for qd in data['queues']:
-		if qd.get('queue_type') in ['PickupQueue', None]:
-			try:
-				await bot.PickupQueue.from_json(qd)
-			except bot.Exc.ValueError as e:
-				log.error(f"Failed to load queue state ({qd.get('queue_id')}): {str(e)}")
-		else:
-			log.error(f"Got unknown queue type '{qd.get('queue_type')}'.")
-
-	for md in data['matches']:
+		# Try to load from database first
+		log.info("Loading state from database...")
+		
+		# Ensure table exists
 		try:
-			await bot.Match.from_json(md)
-		except bot.Exc.ValueError as e:
-			log.error(f"Failed to load match {md['match_id']}: {str(e)}")
+			result = await db.select_one(['data'], 'bot_state', where={'id': 'queue_state'})
+			if not result:
+				log.info("No saved state found in database.")
+				return
+			data = json.loads(result[0])
+		except Exception as e:
+			# Table doesn't exist or query failed, try old JSON file
+			log.warning(f"Database state load failed ({e}), trying JSON file...")
+			try:
+				with open("saved_state.json", "r") as f:
+					data = json.loads(f.read())
+			except IOError:
+				log.info("No saved state file found, starting fresh.")
+				return
 
-	if 'expire' in data.keys():
-		await bot.expire.load_json(data['expire'])
+		log.info("Loading state...")
 
-	if 'countdown_channel_id' in data.keys():
-		bot.scheduler.countdown_channel_id = data['countdown_channel_id']
-		log.info(f"Countdown channel loaded: {bot.scheduler.countdown_channel_id}")
+		bot.allow_offline = {}  # Initialize as empty dict; timestamps don't persist across restarts
+
+		for qd in data.get('queues', []):
+			if qd.get('queue_type') in ['PickupQueue', None]:
+				try:
+					await bot.PickupQueue.from_json(qd)
+				except bot.Exc.ValueError as e:
+					log.error(f"Failed to load queue state ({qd.get('queue_id')}): {str(e)}")
+			else:
+				log.error(f"Got unknown queue type '{qd.get('queue_type')}'.")
+
+		for md in data.get('matches', []):
+			try:
+				await bot.Match.from_json(md)
+			except bot.Exc.ValueError as e:
+				log.error(f"Failed to load match {md['match_id']}: {str(e)}")
+
+		if 'expire' in data:
+			await bot.expire.load_json(data['expire'])
+
+		if 'countdown_channel_id' in data:
+			bot.scheduler.countdown_channel_id = data['countdown_channel_id']
+			log.info(f"Countdown channel loaded: {bot.scheduler.countdown_channel_id}")
+		
+		log.info("State loaded successfully.")
+	except Exception as e:
+		log.error(f"Unexpected error loading state: {e}")
+		return
 
 
 async def remove_players(*users, reason=None, calling_priority=None):
@@ -129,6 +163,16 @@ async def initialize_factories():
 	This must be called after database.connect() to avoid hanging on module import."""
 	log.info("Initializing database tables...")
 	try:
+		# Ensure bot_state table exists for saving queue state
+		await db.execute("""
+			CREATE TABLE IF NOT EXISTS bot_state (
+				id VARCHAR(255) PRIMARY KEY,
+				data LONGTEXT NOT NULL,
+				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+			)
+		""")
+		log.info("  ✓ Bot state table ready")
+		
 		# Initialize stats tables
 		log.info("  Initializing stats tables...")
 		await bot.stats.ensure_tables()
