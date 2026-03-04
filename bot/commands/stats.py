@@ -165,7 +165,7 @@ async def leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Leaderboard - page {page+1} of {pages}", colour=Colour(0x7289DA))
-		# Format as code block for mobile-friendly layout
+		# Format with emojis displayed properly
 		table_lines = ["№   Nickname             W-L    Rating"]
 		for n in range(len(data)):
 			row = data[n]
@@ -173,12 +173,12 @@ async def leaderboard(ctx, page: int = 1):
 			nick = row['nick'].strip()[:16]
 			wl = f"{row['wins']}-{row['losses']}"
 			rating = str(row['rating'])
-			rank = str(ctx.qc.rating_rank(row['rating'])['rank'])
-			table_lines.append(f"{num}. {nick:17} {wl:6} {rank} {rating}")
+			rank = ctx.qc.rating_rank(row['rating'])['rank']
+			table_lines.append(f"{num}. {nick:17} {wl:6} {rank} `{rating}`")
 		
 		embed.add_field(
 			name="—",
-			value="```\n" + "\n".join(table_lines) + "\n```",
+			value="\n".join(table_lines),
 			inline=False
 		)
 		await ctx.reply(embed=embed)
@@ -213,7 +213,7 @@ async def season_leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Season Leaderboard (20+ games) - page {page+1} of {pages}", colour=Colour(0x7289DA))
-		# Format as code block for mobile-friendly layout
+		# Format with emojis displayed properly
 		table_lines = ["№   Nickname             W-L    Rating"]
 		for n in range(len(data)):
 			row = data[n]
@@ -221,12 +221,12 @@ async def season_leaderboard(ctx, page: int = 1):
 			nick = row['nick'].strip()[:16]
 			wl = f"{row['wins']}-{row['losses']}"
 			rating = str(row['rating'])
-			rank = str(ctx.qc.rating_rank(row['rating'])['rank'])
-			table_lines.append(f"{num}. {nick:17} {wl:6} {rank} {rating}")
+			rank = ctx.qc.rating_rank(row['rating'])['rank']
+			table_lines.append(f"{num}. {nick:17} {wl:6} {rank} `{rating}`")
 		
 		embed.add_field(
 			name="—",
-			value="```\n" + "\n".join(table_lines) + "\n```",
+			value="\n".join(table_lines),
 			inline=False
 		)
 		await ctx.reply(embed=embed)

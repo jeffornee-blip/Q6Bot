@@ -116,7 +116,7 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 		# Send deployment message
-		message = "sorry.. one more try on /leaderboard. i think its broken cuz it sees jbj in the top 12."
+		message = "if this doesn't work im going to bed"
 		channel = dc.get_channel(1466135433959309457)
 		if channel:
 			try:
