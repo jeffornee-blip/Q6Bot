@@ -165,29 +165,21 @@ async def leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Leaderboard - page {page+1} of {pages}", colour=Colour(0x7289DA))
+		# Format as code block for mobile-friendly layout
+		table_lines = []
+		for n in range(len(data)):
+			row = data[n]
+			num = str((page*12)+n+1).rjust(2)
+			nick = row['nick'].strip()[:18]
+			wl = f"{row['wins']}-{row['losses']}"
+			rating = str(row['rating'])
+			rank = ctx.qc.rating_rank(row['rating'])['rank']
+			table_lines.append(f"{num}. {nick:20} {wl:6} {rank} {rating}")
+		
 		embed.add_field(
-			name="Nickname",
-			value="\n".join((
-				f'**{(page*12)+n+1}** ' + data[n]['nick'].strip()[:14]
-				for n in range(len(data))
-			)),
-			inline=True
-		)
-		embed.add_field(
-			name="W-L",
-			value="\n".join(
-				f"**{row['wins']}**-**{row['losses']}**"
-				for row in data
-			),
-			inline=True
-		)
-		embed.add_field(
-			name="Rating",
-			value="\n".join(
-				f"{ctx.qc.rating_rank(row['rating'])['rank']} **{row['rating']}**"
-				for row in data
-			),
-			inline=True
+			name="—",
+			value="```\n" + "\n".join(table_lines) + "\n```",
+			inline=False
 		)
 		await ctx.reply(embed=embed)
 		return
@@ -221,29 +213,21 @@ async def season_leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Season Leaderboard (20+ games) - page {page+1} of {pages}", colour=Colour(0x7289DA))
+		# Format as code block for mobile-friendly layout
+		table_lines = []
+		for n in range(len(data)):
+			row = data[n]
+			num = str((page*12)+n+1).rjust(2)
+			nick = row['nick'].strip()[:18]
+			wl = f"{row['wins']}-{row['losses']}"
+			rating = str(row['rating'])
+			rank = ctx.qc.rating_rank(row['rating'])['rank']
+			table_lines.append(f"{num}. {nick:20} {wl:6} {rank} {rating}")
+		
 		embed.add_field(
-			name="Nickname",
-			value="\n".join((
-				f'**{(page*12)+n+1}** ' + data[n]['nick'].strip()[:14]
-				for n in range(len(data))
-			)),
-			inline=True
-		)
-		embed.add_field(
-			name="W-L",
-			value="\n".join(
-				f"**{row['wins']}**-**{row['losses']}**"
-				for row in data
-			),
-			inline=True
-		)
-		embed.add_field(
-			name="Rating",
-			value="\n".join(
-				f"{ctx.qc.rating_rank(row['rating'])['rank']} **{row['rating']}**"
-				for row in data
-			),
-			inline=True
+			name="—",
+			value="```\n" + "\n".join(table_lines) + "\n```",
+			inline=False
 		)
 		await ctx.reply(embed=embed)
 		return
