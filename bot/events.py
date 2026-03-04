@@ -115,10 +115,7 @@ async def on_ready():
 		bot.bot_was_ready = True
 		bot.bot_ready = True
 		log.info("Done.")
-	else:  # Reconnected, fetch new channel objects
-		bot.bot_ready = True
-		log.info("Reconnected to discord.")
-		# Send reconnection message to specific channel
+		# Send deployment message
 		message = (
 			"Captain logic has been updated to include flex players. "
 			"/leaderboard and /season_leaderboard have been updated to function better on mobile devices. "
@@ -129,9 +126,12 @@ async def on_ready():
 			try:
 				await channel.send(message)
 			except Exception as e:
-				log.error(f"Failed to send reconnection message: {e}")
+				log.error(f"Failed to send deployment message: {e}")
 		else:
-			log.error("Reconnection message channel not found.")
+			log.error("Deployment message channel not found.")
+	else:  # Reconnected, fetch new channel objects
+		bot.bot_ready = True
+		log.info("Reconnected to discord.")
 
 
 @dc.event
