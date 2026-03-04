@@ -83,6 +83,40 @@ def save_state():
 		log.error(f"Failed to save state: {e}")
 
 
+async def save_state_async():
+	"""Async version of save_state that properly awaits database operations"""
+	log.info("Saving state to database (async)...")
+	queues = []
+	for qc in bot.queue_channels.values():
+		for q in qc.queues:
+			if q.length > 0:
+				queues.append(q.serialize())
+
+	matches = []
+	for match in bot.active_matches:
+		matches.append(match.serialize())
+
+	try:
+		# Clear old state
+		await db.delete('bot_state', where={'id': 'queue_state'})
+		
+		# Save new state
+		await db.insert('bot_state', dict(
+			id='queue_state',
+			data=json.dumps(dict(
+				queues=queues, 
+				matches=matches, 
+				allow_offline=bot.allow_offline, 
+				expire=bot.expire.serialize(), 
+				countdown_channel_id=bot.scheduler.countdown_channel_id
+			))
+		))
+		log.info(f"State saved successfully to database. {len(queues)} queues, {len(matches)} matches.")
+	except Exception as e:
+		log.error(f"Failed to save state: {e}")
+		raise
+
+
 async def load_state():
 	try:
 		# Try to load from database first

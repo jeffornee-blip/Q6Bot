@@ -339,6 +339,12 @@ async def _force_checkin(
 ): await run_slash(bot.commands.force_checkin, interaction=interaction)
 
 
+@groups.admin_match.subcommand(name='captain_score', description='Show captain scoring logic for the current active match.')
+async def _captain_score(
+		interaction: Interaction
+): await run_slash(bot.commands.captain_score, interaction=interaction)
+
+
 # noadds -> ...
 
 @groups.admin_noadds.subcommand(name='list', description='Show noadds list.')

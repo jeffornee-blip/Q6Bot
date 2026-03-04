@@ -37,11 +37,26 @@ original_SIGTERM_handler = signal.getsignal(signal.SIGTERM)
 
 def shutdown_handler(sig, frame):
 	log.info(f"=== SHUTDOWN SIGNAL {sig} RECEIVED - SAVING STATE ===")
-	bot.save_state()
-	log.info("State save complete, terminating...")
-	console.terminate()
-	signal.signal(signal.SIGINT, original_SIGINT_handler)
-	signal.signal(signal.SIGTERM, original_SIGTERM_handler)
+	try:
+		# Get the running event loop and save state
+		try:
+			loop = asyncio.get_running_loop()
+			loop.run_until_complete(bot.save_state_async())
+		except RuntimeError:
+			# No running loop, try to run in a new loop
+			asyncio.run(bot.save_state_async())
+		log.info("State save complete")
+		# Give time for database flush
+		time.sleep(1)
+	except Exception as e:
+		log.error(f"Failed to save state during shutdown: {e}")
+		import traceback
+		traceback.print_exc()
+	finally:
+		log.info("Terminating...")
+		console.terminate()
+		signal.signal(signal.SIGINT, original_SIGINT_handler)
+		signal.signal(signal.SIGTERM, original_SIGTERM_handler)
 
 signal.signal(signal.SIGINT, shutdown_handler)
 signal.signal(signal.SIGTERM, shutdown_handler)

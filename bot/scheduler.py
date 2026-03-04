@@ -65,7 +65,7 @@ class Scheduler:
 				# Sleep 30 seconds between saves
 				await asyncio.sleep(30)
 				# Save state without blocking
-				bot_main.save_state()
+				await bot_main.save_state_async()
 			except Exception as e:
 				log.error(f"Error in state save loop: {e}")
 				# Continue trying even if save fails
