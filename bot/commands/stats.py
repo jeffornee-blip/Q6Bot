@@ -165,20 +165,20 @@ async def leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Leaderboard - page {page+1} of {pages}", colour=Colour(0x7289DA))
-		# Format as code block for mobile-friendly layout with proper alignment
-		table_lines = ["No Nickname              W-L    Rank  Rating"]
+		# Format with emojis displayed properly
+		table_lines = ["No Nickname             W-L  Rank Rating"]
 		for n in range(len(data)):
 			row = data[n]
 			num = str((page*12)+n+1).rjust(2)
 			nick = row['nick'].strip()[:20].ljust(20)
 			wl = f"{row['wins']}-{row['losses']}".rjust(5)
-			rating = str(row['rating']).rjust(4)
+			rating = str(row['rating'])
 			rank = ctx.qc.rating_rank(row['rating'])['rank']
-			table_lines.append(f"{num} {nick} {wl}  {rank}  {rating}")
+			table_lines.append(f"{num} {nick} {wl}  {rank} {rating}")
 		
 		embed.add_field(
 			name="—",
-			value="```\n" + "\n".join(table_lines) + "\n```",
+			value="\n".join(table_lines),
 			inline=False
 		)
 		await ctx.reply(embed=embed)
@@ -221,20 +221,20 @@ async def season_leaderboard(ctx, page: int = 1):
 
 	if ctx.qc.cfg.emoji_ranks:  # display as embed message
 		embed = Embed(title=f"Season Leaderboard (20+ games) - page {page+1} of {pages}", colour=Colour(0x7289DA))
-		# Format as code block for mobile-friendly layout with proper alignment
-		table_lines = ["No Nickname              W-L    Rank  Rating"]
+		# Format with emojis displayed properly
+		table_lines = ["No Nickname             W-L  Rank Rating"]
 		for n in range(len(data)):
 			row = data[n]
 			num = str((page*12)+n+1).rjust(2)
 			nick = row['nick'].strip()[:20].ljust(20)
 			wl = f"{row['wins']}-{row['losses']}".rjust(5)
-			rating = str(row['rating']).rjust(4)
+			rating = str(row['rating'])
 			rank = ctx.qc.rating_rank(row['rating'])['rank']
-			table_lines.append(f"{num} {nick} {wl}  {rank}  {rating}")
+			table_lines.append(f"{num} {nick} {wl}  {rank} {rating}")
 		
 		embed.add_field(
 			name="—",
-			value="```\n" + "\n".join(table_lines) + "\n```",
+			value="\n".join(table_lines),
 			inline=False
 		)
 		await ctx.reply(embed=embed)
