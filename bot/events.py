@@ -45,39 +45,6 @@ async def on_message(message):
 		await bot.enable_channel(message)
 	elif message.content == '!disable_pubobot':
 		await bot.disable_channel(message)
-	elif message.content.startswith('!set_countdown_channel'):
-		# Handle countdown channel command
-		parts = message.content.split(' ', 1)
-		if len(parts) < 2:
-			await message.channel.send("❌ Usage: `!set_countdown_channel #channel`")
-			return
-		
-		channel_str = parts[1].strip()
-		channel = None
-		
-		# Try to find channel by mention or ID
-		if channel_str.startswith('<#') and channel_str.endswith('>'):
-			channel_id = int(channel_str[2:-1])
-			channel = message.guild.get_channel(channel_id)
-		else:
-			try:
-				channel_id = int(channel_str)
-				channel = message.guild.get_channel(channel_id)
-			except ValueError:
-				channel = next((c for c in message.guild.text_channels if c.name == channel_str.lstrip('#')), None)
-		
-		if not channel:
-			await message.channel.send(f"❌ Channel '{parts[1]}' not found.")
-			return
-		
-		# Check permissions
-		if not (message.author.id == cfg.DC_OWNER_ID or message.channel.permissions_for(message.author).administrator):
-			await message.channel.send("❌ You need administrator permissions to use this command.")
-			return
-		
-		bot.scheduler.countdown_channel_id = channel.id
-		await message.channel.send(f"✅ Countdown channel set to {channel.mention}")
-		return
 	
 	# Resend the 41 Alert to the bottom if countdown is active (only for non-bot messages)
 	if message.author.id != dc.user.id:
@@ -116,7 +83,17 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 		# Send deployment message
-		message = "Q6 Bot is back online. Thank you for your patience."
+		message = """=== Q6 BOT UPDATE ===
+
+Q6 Bot is back online with the following updates:
+
+CHANGES:
+- Captain logic updated to correctly reduce chance of repeat captains
+- Countdown timer now automatically starts in this channel
+- You may need to re-add to the queue
+
+Thank you for your patience.
+- Rajon"""
 		channel = dc.get_channel(1466135433959309457)
 		if channel:
 			try:

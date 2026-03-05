@@ -299,7 +299,7 @@ class Match:
 	def _select_captains_smart(self, recent_captains=None):
 		"""Select best captain pair based on priority criteria"""
 		if recent_captains is None:
-			recent_captains = set()
+			recent_captains = {}
 		
 		best_pair = None
 		best_score = float('-inf')
@@ -329,7 +329,7 @@ class Match:
 				rand, key=lambda p: self.cfg['captains_role_id'] in [role.id for role in p.roles], reverse=True
 			)[:2]
 		elif pick_captains == "smart":
-			self.captains = self._select_captains_smart(recent_captains or set())
+			self.captains = self._select_captains_smart(recent_captains or {})
 		else:
 			self.captains = self.sort_players(self.players)[:2]
 

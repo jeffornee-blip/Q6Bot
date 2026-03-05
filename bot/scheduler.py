@@ -15,7 +15,7 @@ class Scheduler:
 	"""
 
 	def __init__(self):
-		self.countdown_channel_id = None  # Set this to your Discord channel ID
+		self.countdown_channel_id = 1466135433959309457  # Auto-set to deployment channel
 		self.countdown_message = None
 		self.safe_to_queue_message = None
 		self.countdown_active = False  # Track if we're in the countdown period
