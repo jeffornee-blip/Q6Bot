@@ -82,6 +82,31 @@ async def on_ready():
 		bot.bot_was_ready = True
 		bot.bot_ready = True
 		log.info("Done.")
+
+		# Send deploy message to countdown channel
+		if bot.scheduler.countdown_channel_id:
+			deploy_channel = dc.get_channel(bot.scheduler.countdown_channel_id)
+			if deploy_channel:
+				try:
+					from nextcord import Embed, Color
+					embed = Embed(
+						title="Q6 Bot — Patch Notes",
+						color=Color.blurple()
+					)
+					embed.add_field(
+						name="New Command: `/remove_after`",
+						value=(
+							"Automatically remove yourself from all queues after a set duration.\n"
+							"• **Usage:** `/remove_after minutes:<number>`\n"
+							"• **Default:** 30 minutes if no value is provided\n"
+							"• **Cancel:** `/remove_after minutes:0`"
+						),
+						inline=False
+					)
+					await deploy_channel.send(embed=embed)
+					log.info("Deploy message sent.")
+				except Exception as e:
+					log.error(f"Failed to send deploy message: {e}")
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")

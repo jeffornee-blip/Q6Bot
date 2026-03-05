@@ -1,6 +1,6 @@
 __all__ = [
 	'add', 'remove', 'who', 'add_player', 'remove_player', 'promote', 'start', 'split',
-	'reset', 'subscribe', 'server', 'maps', 'force_add', 'force_remove'
+	'reset', 'subscribe', 'server', 'maps', 'force_add', 'force_remove', 'remove_after'
 ]
 
 import time
@@ -277,6 +277,30 @@ async def force_add(ctx, queue: str, players):
 	if msg:
 		await ctx.reply(msg)
 	await ctx.notice(ctx.qc.topic)
+
+
+async def remove_after(ctx, minutes: int = None):
+	""" Set a timer to automatically remove from queues after specified minutes """
+	MAX_MINUTES = 720  # 12 hours
+
+	if minutes is None:
+		minutes = 30
+
+	if minutes == 0:
+		bot.expire.cancel(ctx.qc, ctx.author)
+		await ctx.success(ctx.qc.gt("Your removal timer has been cancelled."))
+		return
+
+	if minutes < 1 or minutes > MAX_MINUTES:
+		raise bot.Exc.ValueError(ctx.qc.gt("Duration must be between 1 and {max} minutes.").format(max=MAX_MINUTES))
+
+	if not any(q.is_added(ctx.author) for q in ctx.qc.queues):
+		raise bot.Exc.ValueError(ctx.qc.gt("You are not added to any queue."))
+
+	bot.expire.set(ctx.qc, ctx.author, minutes * 60)
+	await ctx.success(ctx.qc.gt("You will be automatically removed from queues in {duration}.").format(
+		duration=seconds_to_str(minutes * 60)
+	))
 
 
 async def force_remove(ctx, player: Member, queues: str = None):
