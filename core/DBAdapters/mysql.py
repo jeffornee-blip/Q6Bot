@@ -212,6 +212,7 @@ class Adapter:
 		sql_restricted_words = [
 				'rank',
 				'role',
+				'data',
 		]
 		columns = [f"`{col}`" if col in sql_restricted_words else col for col in columns]
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .main import update_qc_lang, update_rating_system, save_state
+from .main import update_qc_lang, update_rating_system, save_state_async
 from .main import load_state, enable_channel, disable_channel
 from .main import remove_players, expire_auto_ready, initialize_factories
 

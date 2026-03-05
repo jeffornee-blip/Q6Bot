@@ -51,38 +51,6 @@ def update_rating_system(qc_cfg):
 	bot.queue_channels[qc_cfg.p_key].update_rating_system()
 
 
-def save_state():
-	log.info("Saving state to database...")
-	queues = []
-	for qc in bot.queue_channels.values():
-		for q in qc.queues:
-			if q.length > 0:
-				queues.append(q.serialize())
-
-	matches = []
-	for match in bot.active_matches:
-		matches.append(match.serialize())
-
-	try:
-		# Clear old state
-		db.delete('bot_state', where={'id': 'queue_state'})
-		
-		# Save new state
-		db.insert('bot_state', dict(
-			id='queue_state',
-			data=json.dumps(dict(
-				queues=queues, 
-				matches=matches, 
-				allow_offline=bot.allow_offline, 
-				expire=bot.expire.serialize(), 
-				countdown_channel_id=bot.scheduler.countdown_channel_id
-			))
-		))
-		log.info(f"State saved successfully to database. {len(queues)} queues, {len(matches)} matches.")
-	except Exception as e:
-		log.error(f"Failed to save state: {e}")
-
-
 async def save_state_async():
 	"""Async version of save_state that properly awaits database operations"""
 	log.info("Saving state to database (async)...")
@@ -129,11 +97,20 @@ async def load_state():
 				log.info("No saved state found in database - bot_state table is empty.")
 				return
 			log.info(f"Found saved state in database, parsing JSON...")
-			data = json.loads(result[0])
+			
+			# Debug: check what we're trying to parse
+			state_data = result.get('data') if isinstance(result, dict) else result[0]
+			if not state_data:
+				log.error("Database returned empty data for bot_state")
+				raise ValueError("Database returned empty data")
+			
+			log.debug(f"Raw state data length: {len(state_data)} characters")
+			data = json.loads(state_data)
 			log.info(f"Successfully parsed state JSON: {len(data.get('queues', []))} queues, {len(data.get('matches', []))} matches")
 		except Exception as e:
 			# Table doesn't exist or query failed, try old JSON file
-			log.info(f"Database state load failed ({e}), trying JSON file...")
+			log.error(f"Database state load failed - Type: {type(e).__name__}, Error: {e}", exc_info=True)
+			log.info(f"Attempting to load from JSON file as fallback...")
 			try:
 				with open("saved_state.json", "r") as f:
 					data = json.loads(f.read())
