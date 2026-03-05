@@ -299,6 +299,6 @@ async def captain_score(ctx):
 	
 	try:
 		await ctx.author.send(table_output)
-		await ctx.success(ctx.qc.gt("Captain score table has been sent to your DMs."))
+		await ctx.ignore(ctx.qc.gt("Captain score table has been sent to your DMs."))
 	except Exception as e:
 		raise bot.Exc.PermissionError(ctx.qc.gt("Could not send DM. Please ensure your DMs are open."))
