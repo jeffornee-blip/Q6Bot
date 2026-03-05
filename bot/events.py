@@ -82,26 +82,6 @@ async def on_ready():
 		bot.bot_was_ready = True
 		bot.bot_ready = True
 		log.info("Done.")
-		# Send deployment message
-		message = """=== Q6 BOT UPDATE ===
-
-Q6 Bot is back online with the following updates:
-
-CHANGES:
-- Captain logic updated to correctly reduce chance of repeat captains
-- Countdown timer now automatically starts in this channel
-- You may need to re-add to the queue
-
-Thank you for your patience.
-- Rajon"""
-		channel = dc.get_channel(1466135433959309457)
-		if channel:
-			try:
-				await channel.send(message)
-			except Exception as e:
-				log.error(f"Failed to send deployment message: {e}")
-		else:
-			log.error("Deployment message channel not found.")
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")

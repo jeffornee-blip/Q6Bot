@@ -59,11 +59,11 @@ class Scheduler:
 				await asyncio.sleep(30)
 
 	async def _state_save_loop(self):
-		"""Periodic task that saves bot state every 30 seconds"""
+		"""Periodic task that saves bot state every 10 seconds"""
 		while True:
 			try:
-				# Sleep 30 seconds between saves
-				await asyncio.sleep(30)
+				# Sleep 10 seconds between saves
+				await asyncio.sleep(10)
 				# Save state without blocking
 				await bot_main.save_state_async()
 			except Exception as e:

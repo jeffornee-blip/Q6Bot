@@ -126,12 +126,14 @@ async def load_state():
 		try:
 			result = await db.select_one(['data'], 'bot_state', where={'id': 'queue_state'})
 			if not result:
-				log.info("No saved state found in database.")
+				log.info("No saved state found in database - bot_state table is empty.")
 				return
+			log.info(f"Found saved state in database, parsing JSON...")
 			data = json.loads(result[0])
+			log.info(f"Successfully parsed state JSON: {len(data.get('queues', []))} queues, {len(data.get('matches', []))} matches")
 		except Exception as e:
 			# Table doesn't exist or query failed, try old JSON file
-			log.warning(f"Database state load failed ({e}), trying JSON file...")
+			log.info(f"Database state load failed ({e}), trying JSON file...")
 			try:
 				with open("saved_state.json", "r") as f:
 					data = json.loads(f.read())
@@ -139,22 +141,27 @@ async def load_state():
 				log.info("No saved state file found, starting fresh.")
 				return
 
-		log.info("Loading state...")
+		log.info("Loading state into memory...")
 
 		bot.allow_offline = {}  # Initialize as empty dict; timestamps don't persist across restarts
 
+		queues_loaded = 0
 		for qd in data.get('queues', []):
 			if qd.get('queue_type') in ['PickupQueue', None]:
 				try:
 					await bot.PickupQueue.from_json(qd)
+					queues_loaded += 1
+					log.info(f"Loaded queue {qd.get('queue_id')} with {len(qd.get('players', []))} players")
 				except bot.Exc.ValueError as e:
 					log.error(f"Failed to load queue state ({qd.get('queue_id')}): {str(e)}")
 			else:
 				log.error(f"Got unknown queue type '{qd.get('queue_type')}'.")
 
+		matches_loaded = 0
 		for md in data.get('matches', []):
 			try:
 				await bot.Match.from_json(md)
+				matches_loaded += 1
 			except bot.Exc.ValueError as e:
 				log.error(f"Failed to load match {md['match_id']}: {str(e)}")
 
@@ -165,7 +172,7 @@ async def load_state():
 			bot.scheduler.countdown_channel_id = data['countdown_channel_id']
 			log.info(f"Countdown channel loaded: {bot.scheduler.countdown_channel_id}")
 		
-		log.info("State loaded successfully.")
+		log.info(f"State loaded successfully: {queues_loaded} queues, {matches_loaded} matches.")
 	except Exception as e:
 		log.error(f"Unexpected error loading state: {e}")
 		return
