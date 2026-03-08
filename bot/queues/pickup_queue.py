@@ -400,10 +400,14 @@ class PickupQueue:
 		return "\n".join(lines)
 
 	async def promote(self, ctx):
+		QPING_CHANNEL_ID = 1466135433959309457
+		if ctx.channel.id != QPING_CHANNEL_ID:
+			raise bot.Exc.PermissionError("This command can only be used in the designated queue channel.")
+
 		# Always use the "Q Ping" role
 		promotion_role = next((r for r in ctx.channel.guild.roles if r.name == "Q Ping"), None)
 
-		title_msg = self.cfg.promotion_msg or self.qc.gt("Please add to **{name}** pickup, `{left}` players left!")
+		title_msg = self.cfg.promotion_msg or self.qc.gt("Please add to **{name}**, `{left}` players left!")
 		title_msg = title_msg.format_map(SafeTemplateDict(
 			name=self.name,
 			left=self.cfg.size-self.length

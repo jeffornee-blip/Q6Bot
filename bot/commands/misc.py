@@ -1,4 +1,4 @@
-__all__ = ['auto_ready', 'expire', 'default_expire', 'allow_offline', 'switch_dms', 'cointoss', 'show_help', 'set_nick', 'set_countdown_channel', 'denji', 'glas', 'oda']
+__all__ = ['auto_ready', 'expire', 'default_expire', 'allow_offline', 'switch_dms', 'cointoss', 'show_help', 'set_nick', 'set_countdown_channel']
 
 from time import time
 from datetime import timedelta
@@ -155,15 +155,4 @@ async def set_countdown_channel(ctx, channel):
 	bot.scheduler.countdown_channel_id = channel.id
 	await ctx.reply(f"✅ Countdown channel set to {channel.mention}")
 
-
-async def denji(ctx):
-	await ctx.reply("https://tenor.com/view/wideboink-cat-boink-cat-boink-gif-4293569947606972768")
-
-
-async def glas(ctx):
-	await ctx.reply("https://tenor.com/view/lebron-jam-gif-19847626")
-
-
-async def oda(ctx):
-	await ctx.reply("https://tenor.com/view/kanye-west-korea-vultures-2-lp-listening-party-gif-8654001609422381466")
 

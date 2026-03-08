@@ -50,8 +50,8 @@ async def on_message(message):
 	if message.author.id != dc.user.id:
 		await bot.scheduler.resend_alert_if_active()
 
-	# If a non-bot message mentions the @Q Ping role, send the specialty positions embed
-	if message.author.id != dc.user.id and message.role_mentions:
+	# If a non-bot message mentions the @Q Ping role in the designated channel, send the specialty positions embed
+	if message.author.id != dc.user.id and message.channel.id == 1466135433959309457 and message.role_mentions:
 		q_ping_role = next((r for r in message.role_mentions if r.name == "Q Ping"), None)
 		if q_ping_role and (qc := bot.queue_channels.get(message.channel.id)):
 			# Find the most populated queue
@@ -60,7 +60,7 @@ async def on_message(message):
 				key=lambda i: i.length, reverse=True
 			)), None)
 			if q:
-				title_msg = f"Please add to **{q.name}** pickup, `{q.cfg.size - q.length}` players left!"
+				title_msg = f"Please add to **{q.name}**, `{q.cfg.size - q.length}` players left!"
 				embed = Embed(
 					description=f"{title_msg}\n\n**Specialty Positions Needed:**\n{q._get_specialty_positions_msg()}",
 					color=Color.blurple()
@@ -112,7 +112,7 @@ async def on_ready():
 					)
 					embed.add_field(
 						name="",
-						value="• `/qping` now displays an embed with specialty positions needed\n• Bot auto-replies with specialty positions embed when anyone mentions @Q Ping\n• `/allow_offline` status now persists across bot reboots",
+						value="• `/qping` and @Q Ping embed restricted to the designated ranked queue channel",
 						inline=False
 					)
 					await patch_notes_channel.send(embed=embed)
