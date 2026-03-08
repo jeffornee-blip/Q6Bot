@@ -1,5 +1,5 @@
 import traceback
-from nextcord import ChannelType, Activity, ActivityType
+from nextcord import ChannelType, Activity, ActivityType, Embed, Color
 
 from core.client import dc
 from core.console import log
@@ -50,6 +50,23 @@ async def on_message(message):
 	if message.author.id != dc.user.id:
 		await bot.scheduler.resend_alert_if_active()
 
+	# If a non-bot message mentions the @Q Ping role, send the specialty positions embed
+	if message.author.id != dc.user.id and message.role_mentions:
+		q_ping_role = next((r for r in message.role_mentions if r.name == "Q Ping"), None)
+		if q_ping_role and (qc := bot.queue_channels.get(message.channel.id)):
+			# Find the most populated queue
+			q = next(iter(sorted(
+				(i for i in qc.queues if i.length),
+				key=lambda i: i.length, reverse=True
+			)), None)
+			if q:
+				title_msg = f"Please add to **{q.name}** pickup, `{q.cfg.size - q.length}` players left!"
+				embed = Embed(
+					description=f"{title_msg}\n\n**Specialty Positions Needed:**\n{q._get_specialty_positions_msg()}",
+					color=Color.blurple()
+				)
+				await message.channel.send(embed=embed)
+
 
 @dc.event
 async def on_reaction_add(reaction, user):
@@ -95,7 +112,7 @@ async def on_ready():
 					)
 					embed.add_field(
 						name="",
-						value="• `/qping` now sends a single public message (no more 'Sending promotion...' message)\n• `/qping` message now shows who used the command",
+						value="• `/qping` now displays an embed with specialty positions needed\n• Bot auto-replies with specialty positions embed when anyone mentions @Q Ping\n• `/allow_offline` status now persists across bot reboots",
 						inline=False
 					)
 					await patch_notes_channel.send(embed=embed)

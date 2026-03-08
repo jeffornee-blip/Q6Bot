@@ -4,6 +4,7 @@ from core.console import log
 from core.cfg_factory import FactoryTable, CfgFactory, Variables, VariableTable
 from core.utils import get_nick, get, SafeTemplateDict
 from core.client import dc
+from nextcord import Embed, Color
 
 import bot
 
@@ -366,7 +367,7 @@ class PickupQueue:
 		return None
 
 	def _get_specialty_positions_msg(self):
-		"""Build a message showing how many specialty positions are still needed"""
+		"""Build a string showing how many specialty positions are still needed"""
 		specialty_roles = ['seeker', 'beater', 'keeper']
 		counts = {role: 0 for role in specialty_roles}
 		flex_count = 0
@@ -396,18 +397,22 @@ class PickupQueue:
 			filled = min(needed_per_role, counts[role])
 			lines.append(f"{filled}/{needed_per_role} {role.capitalize()}s")
 
-		return "\n**Specialty Positions Needed:**\n" + "\n".join(lines)
+		return "\n".join(lines)
 
 	async def promote(self, ctx):
 		# Always use the "Q Ping" role
 		promotion_role = next((r for r in ctx.channel.guild.roles if r.name == "Q Ping"), None)
-		promotion_msg = self.cfg.promotion_msg or self.qc.gt("{role} Please add to **{name}** pickup, `{left}` players left!")
-		promotion_msg = promotion_msg.format_map(SafeTemplateDict(
-			role=promotion_role.mention if promotion_role else "",
+
+		title_msg = self.cfg.promotion_msg or self.qc.gt("Please add to **{name}** pickup, `{left}` players left!")
+		title_msg = title_msg.format_map(SafeTemplateDict(
 			name=self.name,
 			left=self.cfg.size-self.length
 		))
-		promotion_msg += self._get_specialty_positions_msg()
+
+		embed = Embed(
+			description=f"{title_msg}\n\n**Specialty Positions Needed:**\n{self._get_specialty_positions_msg()}",
+			color=Color.blurple()
+		)
 
 		if (
 			promotion_role and not promotion_role.mentionable and
@@ -415,8 +420,8 @@ class PickupQueue:
 		):
 			raise bot.Exc.PermissionError("Insufficient permissions to ping the promotion role.")
 		else:
-			promotion_msg = f"{ctx.author.mention} used /qping:\n{promotion_msg}"
-			await ctx.notice(promotion_msg)
+			content = promotion_role.mention if promotion_role else None
+			await ctx.notice(content=content, embed=embed)
 
 	async def reset(self):
 		self.queue = []

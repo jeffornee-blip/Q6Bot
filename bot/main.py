@@ -120,7 +120,7 @@ async def load_state():
 
 		log.info("Loading state into memory...")
 
-		bot.allow_offline = {}  # Initialize as empty dict; timestamps don't persist across restarts
+		bot.allow_offline = data.get('allow_offline', {})
 
 		queues_loaded = 0
 		for qd in data.get('queues', []):
