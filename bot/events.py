@@ -95,8 +95,8 @@ async def on_ready():
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="Leaderboard Win Rate",
-						value="Added a WR (win rate) column to `/leaderboard` and `/season_leaderboard` commands.",
+						name="",
+						value="Removed 1000 MMR from PumkinSnatch",
 						inline=False
 					)
 					await deploy_channel.send(embed=embed)
