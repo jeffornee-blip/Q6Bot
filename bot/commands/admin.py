@@ -9,6 +9,7 @@ from datetime import timedelta
 from nextcord import Member
 
 from core.utils import seconds_to_str, get_nick
+from core.database import db
 
 import bot
 
@@ -182,10 +183,21 @@ async def captain_score(ctx):
 	if not match:
 		raise bot.Exc.NotFoundError(ctx.qc.gt("No active match found in this channel."))
 	
-	# Try to get recent captains data (for penalty calculation)
+	# Get recent captains data from the database (for penalty calculation)
 	recent_captains = {}
-	# This would be populated from database/cache if available
-	# For now, defaults to empty dict (0 penalties)
+	if match.cfg['pick_captains'] == "smart":
+		try:
+			recent_captains_data = await db.select(
+				('user_id',), 'qc_player_matches',
+				where={'channel_id': ctx.qc.id, 'is_captain': 1},
+				order_by='match_id DESC',
+				limit=6
+			)
+			for m in recent_captains_data:
+				user_id = m['user_id']
+				recent_captains[user_id] = recent_captains.get(user_id, 0) + 1
+		except:
+			pass
 	
 	# Collect all captain pair scores
 	pair_scores = []

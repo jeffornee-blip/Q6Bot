@@ -89,18 +89,19 @@ async def on_ready():
 			if deploy_channel:
 				try:
 					from nextcord import Embed, Color
+					from core.config import __version__
 					embed = Embed(
-						title="Q6 Bot — Patch Notes",
+						title=f"Q6 Bot — Patch Notes V{__version__}",
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="New Command: `/remove_after`",
-						value=(
-							"Automatically remove yourself from all queues after a set duration.\n"
-							"• **Usage:** `/remove_after minutes:<number>`\n"
-							"• **Default:** 30 minutes if no value is provided\n"
-							"• **Cancel:** `/remove_after minutes:0`"
-						),
+						name="Captain Score Fix",
+						value="The `captain_score` command now correctly shows the recent captain penalty. Previously, the Recent- column always displayed 0 even for players who captained recent games.",
+						inline=False
+					)
+					embed.add_field(
+						name="",
+						value="Please don't let PS get the first star rank.",
 						inline=False
 					)
 					await deploy_channel.send(embed=embed)
