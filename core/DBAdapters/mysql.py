@@ -35,6 +35,7 @@ class Adapter:
 	errors = Errors
 
 	def __init__(self, db_address):
+		self.pool = None
 		self.dbAddress = db_address
 		try:
 			self.dbUser, db_address = db_address.split(':', 1)

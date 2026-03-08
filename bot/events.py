@@ -112,7 +112,7 @@ async def on_ready():
 					)
 					embed.add_field(
 						name="",
-						value="• `/qping` and @Q Ping embed restricted to the designated ranked queue channel",
+						value="• Fixed database connection stability — bot now retries on connection failure instead of crashing",
 						inline=False
 					)
 					await patch_notes_channel.send(embed=embed)

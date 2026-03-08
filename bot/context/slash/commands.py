@@ -732,17 +732,6 @@ async def _commands(
 ): await interaction.response.send_message(cfg.COMMANDS_URL, ephemeral=True)
 
 
-@dc.slash_command(name='remove_after', description='Auto-remove from queues after specified minutes (default 30).', **guild_kwargs)
-async def _remove_after(
-		interaction: Interaction,
-		minutes: int = SlashOption(
-			name="minutes",
-			description="Minutes until auto-removal (0 to cancel). Default: 30.",
-			required=False,
-			default=30)
-): await run_slash(bot.commands.remove_after, interaction=interaction, minutes=minutes)
-
-
 @dc.slash_command(name='nick', description='Change your nickname with the rating prefix.', **guild_kwargs)
 async def _nick(
 		interaction: Interaction,

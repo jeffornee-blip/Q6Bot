@@ -80,26 +80,33 @@ async def run_console():
 
 # Background processes loop
 async def think(loop):
-	# Connect to database at startup with timeout to prevent hanging
+	# Connect to database at startup with retries
 	db_connected = False
-	try:
-		# Use asyncio.wait_for to add a 30 second timeout to database connection
-		db = database.get_db()
-		await asyncio.wait_for(db.connect(), timeout=30)
-		db_connected = True
-		log.info("Database connected successfully")
-		
-		# Initialize factory tables after database connection
+	db = database.get_db()
+	for attempt in range(1, 4):
 		try:
-			await bot.initialize_factories()
+			log.info(f"Database connection attempt {attempt}/3...")
+			await asyncio.wait_for(db.connect(), timeout=30)
+			db_connected = True
+			log.info("Database connected successfully")
+			break
 		except Exception as e:
-			log.error(f"Error initializing factories: {e}\n{traceback.format_exc()}")
-			raise
-			
-	except asyncio.TimeoutError:
-		log.error("Database connection timed out after 30 seconds. This may be normal if the database is initializing.")
+			log.error(f"Database connection attempt {attempt} failed: {e}")
+			if attempt < 3:
+				await asleep(5)
+
+	if not db_connected:
+		log.error("All database connection attempts failed. Cannot start without database.")
+		console.terminate()
+		loop.stop()
+		return
+
+	# Initialize factory tables after database connection
+	try:
+		await bot.initialize_factories()
 	except Exception as e:
-		log.error(f"Failed to connect to database: {e}\nBot will continue without database connection")
+		log.error(f"Error initializing factories: {e}\n{traceback.format_exc()}")
+		raise
 	
 	for task in dc.events['on_init']:
 		try:
