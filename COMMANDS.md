@@ -6,7 +6,7 @@
 | /add                  | Join queues                                             |
 | /remove               | Leave queues                                            |
 | /who                  | List queue players                                      |
-| /promote              | Promote a queue                                         |
+| /qping                | Promote a queue                                         |
 | /server               | Show queue server setting                               |
 | /maps                 | Show queue map list                                     |
 | /map                  | Show random map from a queue map list                   |

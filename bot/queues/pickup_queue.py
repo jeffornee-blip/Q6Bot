@@ -357,14 +357,57 @@ class PickupQueue:
 			start_msg=self.cfg.start_msg, server=self.cfg.server
 		)
 
+	def _get_member_role(self, member):
+		"""Get Quidditch position from member's Discord roles"""
+		role_names = [r.name.lower() for r in member.roles]
+		for role in ['keeper', 'seeker', 'beater', 'flex']:
+			if role in role_names:
+				return role
+		return None
+
+	def _get_specialty_positions_msg(self):
+		"""Build a message showing how many specialty positions are still needed"""
+		specialty_roles = ['seeker', 'beater', 'keeper']
+		counts = {role: 0 for role in specialty_roles}
+		flex_count = 0
+
+		for member in self.queue:
+			role = self._get_member_role(member)
+			if role in specialty_roles:
+				counts[role] += 1
+			elif role == 'flex':
+				flex_count += 1
+
+		needed_per_role = 2  # 1 per team, 2 teams
+		# Allocate flex players to roles with the most remaining openings
+		remaining = {role: max(0, needed_per_role - counts[role]) for role in specialty_roles}
+		flex_left = flex_count
+		while flex_left > 0 and any(remaining[r] > 0 for r in specialty_roles):
+			# Find the role with the most openings
+			role_to_fill = max(specialty_roles, key=lambda r: remaining[r])
+			if remaining[role_to_fill] == 0:
+				break
+			remaining[role_to_fill] -= 1
+			counts[role_to_fill] += 1
+			flex_left -= 1
+
+		lines = []
+		for role in specialty_roles:
+			filled = min(needed_per_role, counts[role])
+			lines.append(f"{filled}/{needed_per_role} {role.capitalize()}s")
+
+		return "\n**Specialty Positions Needed:**\n" + "\n".join(lines)
+
 	async def promote(self, ctx):
-		promotion_role = self.cfg.promotion_role or self.qc.cfg.promotion_role
+		# Always use the "Q Ping" role
+		promotion_role = next((r for r in ctx.channel.guild.roles if r.name == "Q Ping"), None)
 		promotion_msg = self.cfg.promotion_msg or self.qc.gt("{role} Please add to **{name}** pickup, `{left}` players left!")
 		promotion_msg = promotion_msg.format_map(SafeTemplateDict(
 			role=promotion_role.mention if promotion_role else "",
 			name=self.name,
 			left=self.cfg.size-self.length
 		))
+		promotion_msg += self._get_specialty_positions_msg()
 
 		if (
 			promotion_role and not promotion_role.mentionable and
@@ -373,7 +416,7 @@ class PickupQueue:
 			raise bot.Exc.PermissionError("Insufficient permissions to ping the promotion role.")
 		else:
 			# answers on /slash commands do not ping, so have to answer sth on /slash command first before sending ctx.notice
-			await ctx.ignore(ctx.qc.gt("Sending **{queue}** promotion...").format(queue=self.name))
+			await ctx.notice(ctx.qc.gt("Sending **{queue}** promotion...").format(queue=self.name))
 			await ctx.notice(promotion_msg)
 
 	async def reset(self):

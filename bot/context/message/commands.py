@@ -234,11 +234,6 @@ async def _cancel_match(ctx: MessageContext, args: str = None):
 	await bot.commands.report_admin(ctx, match_id=int(args), abort=True)
 
 
-@message_command('promote')
-async def _promote(ctx: MessageContext, args: str = None):
-	await bot.commands.promote(ctx, args)
-
-
 @message_command('set_channel_cfg')
 async def _set_qc_cfg(ctx: MessageContext, args: str = None):
 	if not args:

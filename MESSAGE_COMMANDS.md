@@ -35,7 +35,6 @@
 | ++ / !add        |         | Add to active queues                   |
 | -queue / !remove |         | Remove yourself from a specified queue |
 | -- / !remove     |         | Remove yourself from all queues        |
-| !promote         | [`queue`] | Promote a queue                        |
 
 #### Personal settings
 | command           | arg1                    | description                                                 |

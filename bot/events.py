@@ -96,7 +96,7 @@ async def on_ready():
 					)
 					embed.add_field(
 						name="",
-						value="Removed 1000 MMR from PumkinSnatch",
+						value="• `/promote` has been renamed to `/qping`\n• `/qping` now shows specialty positions needed (Seekers, Beaters, Keepers) with flex allocation\n• `/qping` responses are now public so everyone can see who used it\n• `/qping` now always pings the @Q Ping role\n• Removed `!promote` message command — use `/qping` instead",
 						inline=False
 					)
 					await deploy_channel.send(embed=embed)

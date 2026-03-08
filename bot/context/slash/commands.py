@@ -503,7 +503,7 @@ async def _who(
 _who.on_autocomplete("queues")(autocomplete.queues)
 
 
-@dc.slash_command(name='promote', description='Promote a queue.', **guild_kwargs)
+@dc.slash_command(name='qping', description='Promote a queue.', **guild_kwargs)
 async def promote(
 		interaction: Interaction,
 		queue: str = SlashOption(required=False)
