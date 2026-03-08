@@ -95,8 +95,8 @@ async def on_ready():
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="Captain Score Fix",
-						value="The `captain_score` command now correctly shows the recent captain penalty. Previously, the Recent- column always displayed 0 even for players who captained recent games.",
+						name="Smart Captain Fix",
+						value="Fixed an issue where recent captain penalties were never applied. The `is_captain` column was missing from the database schema, so captain history was not being tracked. Smart captain selection will now correctly deprioritize players who have recently captained.",
 						inline=False
 					)
 					embed.add_field(

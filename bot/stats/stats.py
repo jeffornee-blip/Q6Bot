@@ -92,7 +92,8 @@ async def ensure_tables():
 			dict(cname="channel_id", ctype=db.types.int),
 			dict(cname="user_id", ctype=db.types.int),
 			dict(cname="nick", ctype=db.types.str),
-			dict(cname="team", ctype=db.types.bool)
+			dict(cname="team", ctype=db.types.bool),
+			dict(cname="is_captain", ctype=db.types.bool)
 		],
 		primary_keys=["match_id", "user_id"]
 	))
