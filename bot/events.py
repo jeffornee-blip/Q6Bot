@@ -83,10 +83,9 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# Send deploy message to countdown channel
-		if bot.scheduler.countdown_channel_id:
-			deploy_channel = dc.get_channel(bot.scheduler.countdown_channel_id)
-			if deploy_channel:
+		# Send deploy message to patch notes channel
+		patch_notes_channel = dc.get_channel(1480019437129170975)
+		if patch_notes_channel:
 				try:
 					from nextcord import Embed, Color
 					from core.config import __version__
@@ -96,10 +95,10 @@ async def on_ready():
 					)
 					embed.add_field(
 						name="",
-						value="• `/promote` has been renamed to `/qping`\n• `/qping` now shows specialty positions needed (Seekers, Beaters, Keepers) with flex allocation\n• `/qping` responses are now public so everyone can see who used it\n• `/qping` now always pings the @Q Ping role\n• Removed `!promote` message command — use `/qping` instead",
+						value="• `/qping` now sends a single public message (no more 'Sending promotion...' message)\n• `/qping` message now shows who used the command",
 						inline=False
 					)
-					await deploy_channel.send(embed=embed)
+					await patch_notes_channel.send(embed=embed)
 					log.info("Deploy message sent.")
 				except Exception as e:
 					log.error(f"Failed to send deploy message: {e}")

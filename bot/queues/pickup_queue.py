@@ -415,8 +415,7 @@ class PickupQueue:
 		):
 			raise bot.Exc.PermissionError("Insufficient permissions to ping the promotion role.")
 		else:
-			# answers on /slash commands do not ping, so have to answer sth on /slash command first before sending ctx.notice
-			await ctx.notice(ctx.qc.gt("Sending **{queue}** promotion...").format(queue=self.name))
+			promotion_msg = f"{ctx.author.mention} used /qping:\n{promotion_msg}"
 			await ctx.notice(promotion_msg)
 
 	async def reset(self):
