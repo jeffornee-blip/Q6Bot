@@ -95,13 +95,8 @@ async def on_ready():
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="Smart Captain Fix",
-						value="Fixed an issue where recent captain penalties were never applied. The `is_captain` column was missing from the database schema, so captain history was not being tracked. Smart captain selection will now correctly deprioritize players who have recently captained.",
-						inline=False
-					)
-					embed.add_field(
-						name="",
-						value="Please don't let PS get the first star rank.",
+						name="Leaderboard Win Rate",
+						value="Added a WR (win rate) column to `/leaderboard` and `/season_leaderboard` commands.",
 						inline=False
 					)
 					await deploy_channel.send(embed=embed)

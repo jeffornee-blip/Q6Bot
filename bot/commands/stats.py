@@ -174,28 +174,14 @@ async def leaderboard(ctx, page: int = 1):
 			# Strip emojis from nickname - keep only ASCII + basic punctuation
 			nick_clean = re.sub(r'[^\x00-\x7F()\[\]-]', '', row['nick'].strip())[:20].ljust(20)
 			wl = f"{row['wins']}-{row['losses']}".rjust(5)
+			total_games = row['wins'] + row['losses']
+			wr = f"({round(row['wins'] / total_games * 100)}%)".rjust(6) if total_games > 0 else "  (0%)"
 			rating = str(row['rating']).rjust(4)
 			rank = ctx.qc.rating_rank(row['rating'])['rank']
-			table_lines.append(f"`{num} {nick_clean} {wl}`  {rank} {rating}")
+			table_lines.append(f"`{num} {nick_clean} {wl} {wr}`  {rank} {rating}")
 		
 		# Add header for left columns only
-		table_lines.insert(0, f"`{'No':>2} {'Nickname':<20} {'W-L':>5}`")
-		
-		embed.add_field(
-			name="—",
-			value="\n".join(table_lines),
-			inline=False
-		)
-		await ctx.reply(embed=embed)
-		return
-		
-		embed.add_field(
-			name="—",
-			value="\n".join(table_lines),
-			inline=False
-		)
-		await ctx.reply(embed=embed)
-		return
+		table_lines.insert(0, f"`{'No':>2} {'Nickname':<20} {'W-L':>5} {'WR':>6}`")
 		
 		embed.add_field(
 			name="—",
@@ -208,7 +194,7 @@ async def leaderboard(ctx, page: int = 1):
 	# display as md table
 	await ctx.reply(
 		discord_table(
-			["№", "Nickname", "W-L", "Rating"],
+			["№", "Nickname", "W-L", "WR", "Rating"],
 			[[
 				(page * 12) + (n + 1),
 				data[n]['nick'].strip()[:15],
@@ -216,6 +202,7 @@ async def leaderboard(ctx, page: int = 1):
 					data[n]['wins'],
 					data[n]['losses']
 				),
+				"({0}%)".format(round(data[n]['wins'] / max(1, data[n]['wins'] + data[n]['losses']) * 100)),
 				str(data[n]['rating']) + ctx.qc.rating_rank(data[n]['rating'])['rank']
 			] for n in range(len(data))]
 		)
@@ -242,12 +229,14 @@ async def season_leaderboard(ctx, page: int = 1):
 			# Strip emojis from nickname - keep only ASCII + basic punctuation
 			nick_clean = re.sub(r'[^\x00-\x7F()\[\]-]', '', row['nick'].strip())[:20].ljust(20)
 			wl = f"{row['wins']}-{row['losses']}".rjust(5)
+			total_games = row['wins'] + row['losses']
+			wr = f"({round(row['wins'] / total_games * 100)}%)".rjust(6) if total_games > 0 else "  (0%)"
 			rating = str(row['rating']).rjust(4)
 			rank = ctx.qc.rating_rank(row['rating'])['rank']
-			table_lines.append(f"`{num} {nick_clean} {wl}`  {rank} {rating}")
+			table_lines.append(f"`{num} {nick_clean} {wl} {wr}`  {rank} {rating}")
 		
 		# Add header for left columns only
-		table_lines.insert(0, f"`{'No':>2} {'Nickname':<20} {'W-L':>5}`")
+		table_lines.insert(0, f"`{'No':>2} {'Nickname':<20} {'W-L':>5} {'WR':>6}`")
 		
 		embed.add_field(
 			name="—",
@@ -260,7 +249,7 @@ async def season_leaderboard(ctx, page: int = 1):
 	# display as md table
 	await ctx.reply(
 		discord_table(
-			["№", "Nickname", "W-L", "Rating"],
+			["№", "Nickname", "W-L", "WR", "Rating"],
 			[[
 				(page * 12) + (n + 1),
 				data[n]['nick'].strip()[:15],
@@ -268,6 +257,7 @@ async def season_leaderboard(ctx, page: int = 1):
 					data[n]['wins'],
 					data[n]['losses']
 				),
+				"({0}%)".format(round(data[n]['wins'] / max(1, data[n]['wins'] + data[n]['losses']) * 100)),
 				str(data[n]['rating']) + ctx.qc.rating_rank(data[n]['rating'])['rank']
 			] for n in range(len(data))]
 		)
