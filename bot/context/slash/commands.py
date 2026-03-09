@@ -738,3 +738,48 @@ async def _nick(
 		nick: str
 ): await run_slash(bot.commands.set_nick, interaction=interaction, nick=nick)
 
+
+# season -> ...
+
+@groups.admin_season.subcommand(name='end', description='End the current season, archive standings, and reset ratings.')
+async def _season_end(
+		interaction: Interaction
+): await run_slash(bot.commands.season_end, interaction=interaction)
+
+
+# role-based leaderboards
+
+@dc.slash_command(name='leaderboard_chaser', description='Show leaderboard for Chasers.', **guild_kwargs)
+async def _lb_chaser(
+		interaction: Interaction,
+		page: int = SlashOption(required=False),
+): await run_slash(bot.commands.leaderboard_by_role, interaction=interaction, role_name='chaser', page=page)
+
+
+@dc.slash_command(name='leaderboard_seeker', description='Show leaderboard for Seekers.', **guild_kwargs)
+async def _lb_seeker(
+		interaction: Interaction,
+		page: int = SlashOption(required=False),
+): await run_slash(bot.commands.leaderboard_by_role, interaction=interaction, role_name='seeker', page=page)
+
+
+@dc.slash_command(name='leaderboard_beater', description='Show leaderboard for Beaters.', **guild_kwargs)
+async def _lb_beater(
+		interaction: Interaction,
+		page: int = SlashOption(required=False),
+): await run_slash(bot.commands.leaderboard_by_role, interaction=interaction, role_name='beater', page=page)
+
+
+@dc.slash_command(name='leaderboard_keeper', description='Show leaderboard for Keepers.', **guild_kwargs)
+async def _lb_keeper(
+		interaction: Interaction,
+		page: int = SlashOption(required=False),
+): await run_slash(bot.commands.leaderboard_by_role, interaction=interaction, role_name='keeper', page=page)
+
+
+@dc.slash_command(name='leaderboard_flex', description='Show leaderboard for Flex players.', **guild_kwargs)
+async def _lb_flex(
+		interaction: Interaction,
+		page: int = SlashOption(required=False),
+): await run_slash(bot.commands.leaderboard_by_role, interaction=interaction, role_name='flex', page=page)
+

@@ -307,3 +307,33 @@ async def _set_countdown_channel(ctx: MessageContext, args: str = None):
 		raise bot.Exc.ValueError(f"Channel '{args}' not found.")
 	
 	await bot.commands.set_countdown_channel(ctx, channel)
+
+
+@message_command('leaderboard_chaser', 'lbc')
+async def _lb_chaser(ctx: MessageContext, args: str = None):
+	page = int(args) if args else None
+	await bot.commands.leaderboard_by_role(ctx, role_name='chaser', page=page)
+
+
+@message_command('leaderboard_seeker', 'lbs')
+async def _lb_seeker(ctx: MessageContext, args: str = None):
+	page = int(args) if args else None
+	await bot.commands.leaderboard_by_role(ctx, role_name='seeker', page=page)
+
+
+@message_command('leaderboard_beater', 'lbb')
+async def _lb_beater(ctx: MessageContext, args: str = None):
+	page = int(args) if args else None
+	await bot.commands.leaderboard_by_role(ctx, role_name='beater', page=page)
+
+
+@message_command('leaderboard_keeper', 'lbk')
+async def _lb_keeper(ctx: MessageContext, args: str = None):
+	page = int(args) if args else None
+	await bot.commands.leaderboard_by_role(ctx, role_name='keeper', page=page)
+
+
+@message_command('leaderboard_flex', 'lbf')
+async def _lb_flex(ctx: MessageContext, args: str = None):
+	page = int(args) if args else None
+	await bot.commands.leaderboard_by_role(ctx, role_name='flex', page=page)

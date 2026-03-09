@@ -6,6 +6,7 @@ from nextcord import Embed, Color
 from core.client import dc
 from core.console import log
 from . import main as bot_main
+import bot
 
 
 class Scheduler:
@@ -34,18 +35,23 @@ class Scheduler:
 			self.state_save_task = asyncio.create_task(self._state_save_loop())
 			log.info("Periodic state save task started")
 
+	def _has_completed_draft(self):
+		"""Check if any active match has a completed draft (state == WAITING_REPORT)"""
+		from bot.match.match import Match
+		return any(m.state == Match.WAITING_REPORT for m in bot.active_matches)
+
 	async def _timer_loop(self):
-		"""Dedicated task that triggers at exact :33 mark to start countdown and :42 to end"""
+		"""Dedicated task that checks for completed drafts during :33-:41 and sends all-clear at :42"""
 		while True:
 			try:
 				now = datetime.now()
 				current_minute = now.minute
 				
-				# Check if we need to start countdown at :33
-				if current_minute == 33:
-					if not self.countdown_active:
+				# During :33-:41 window, watch for a completed draft
+				if 33 <= current_minute <= 41:
+					if not self.countdown_active and self._has_completed_draft():
 						await self.start_countdown()
-				# Check if we need to end countdown at :42
+				# At :42, end the countdown if it was triggered
 				elif current_minute == 42:
 					if self.countdown_active:
 						await self.end_countdown()
@@ -77,7 +83,7 @@ class Scheduler:
 		pass
 
 	async def start_countdown(self):
-		"""Send the 41 Alert at :33"""
+		"""Send the 41 Alert when a draft completes during the :33-:41 window"""
 		if not self.countdown_channel_id:
 			return
 		

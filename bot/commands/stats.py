@@ -1,4 +1,5 @@
-__all__ = ['last_game', 'stats', 'top', 'rank', 'leaderboard', 'season_leaderboard']
+__all__ = ['last_game', 'stats', 'top', 'rank', 'leaderboard', 'season_leaderboard',
+	'leaderboard_by_role']
 
 import re
 from time import time
@@ -104,14 +105,11 @@ async def rank(ctx, player: Member = None):
 		# Calculate rank placement only if player is not hidden
 		place = "?"
 		if p['rating'] is not None and not p['is_hidden']:
-			# Fast rank calculation: count players with higher ratings (non-hidden only)
-			# Much faster than loading entire leaderboard
 			ranked_players = await db.select(
 				['rating'],
 				'qc_players',
 				where={'channel_id': ctx.qc.rating.channel_id, 'is_hidden': 0}
 			)
-			# Count how many non-null rated players have higher rating
 			place = sum(1 for x in ranked_players if x['rating'] is not None and x['rating'] > p['rating']) + 1
 		
 		embed = Embed(title=f"__{get_nick(target)}__", colour=Colour(0x7289DA))
@@ -133,6 +131,37 @@ async def rank(ctx, player: Member = None):
 		), inline=True)
 		if target.display_avatar:
 			embed.set_thumbnail(url=target.display_avatar.url)
+
+		# Rating graph (last 20 rating changes as a sparkline)
+		history = await db.select(
+			('rating_before', 'rating_change'),
+			'qc_rating_history',
+			where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
+			order_by='id', limit=20
+		)
+		if len(history) >= 2:
+			ratings = [h['rating_before'] for h in history]
+			ratings.append(history[-1]['rating_before'] + history[-1]['rating_change'])
+			graph = _rating_sparkline(ratings)
+			embed.add_field(
+				name=ctx.qc.gt("Rating Graph") + f"  ({ratings[0]} → {ratings[-1]})",
+				value=graph,
+				inline=False
+			)
+
+		# Favorite teammates (most frequent co-players on same team)
+		teammates = await db.fetchall(
+			"SELECT pm2.nick, COUNT(*) as cnt FROM `qc_player_matches` pm1 "
+			"JOIN `qc_player_matches` pm2 ON pm1.match_id = pm2.match_id AND pm1.team = pm2.team "
+			"WHERE pm1.channel_id = %s AND pm1.user_id = %s AND pm2.user_id != %s "
+			"GROUP BY pm2.user_id ORDER BY cnt DESC LIMIT 3",
+			(ctx.qc.id, target.id, target.id)
+		)
+		if teammates:
+			tm_lines = [f"**{t['nick'].strip()[:20]}** ({t['cnt']} games)" for t in teammates]
+			embed.add_field(name=ctx.qc.gt("Favorite Teammates"), value="\n".join(tm_lines), inline=False)
+
+		# Last changes
 		changes = await db.select(
 			('at', 'rating_change', 'match_id', 'reason'),
 			'qc_rating_history', where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
@@ -153,6 +182,19 @@ async def rank(ctx, player: Member = None):
 		await ctx.reply(embed=embed)
 	else:
 		raise bot.Exc.ValueError(ctx.qc.gt("No rating data found."))
+
+
+def _rating_sparkline(ratings):
+	"""Generate a text-based sparkline graph for rating history."""
+	if len(ratings) < 2:
+		return ""
+	BARS = "▁▂▃▄▅▆▇█"
+	mn, mx = min(ratings), max(ratings)
+	spread = mx - mn
+	if spread == 0:
+		return " ".join(BARS[4] for _ in ratings)
+	scaled = [int((r - mn) / spread * (len(BARS) - 1)) for r in ratings]
+	return " ".join(BARS[s] for s in scaled)
 
 
 async def leaderboard(ctx, page: int = 1):
@@ -262,3 +304,56 @@ async def season_leaderboard(ctx, page: int = 1):
 			] for n in range(len(data))]
 		)
 	)
+
+
+ROLE_NAMES = {
+	'chaser': 'Chaser',
+	'seeker': 'Seeker',
+	'beater': 'Beater',
+	'keeper': 'Keeper',
+	'flex': 'Flex',
+}
+
+
+async def leaderboard_by_role(ctx, role_name: str, page: int = 1):
+	"""Show leaderboard filtered by a Quidditch role (Discord role on the member)."""
+	page = (page or 1) - 1
+	role_key = role_name.lower()
+	display_name = ROLE_NAMES.get(role_key, role_name.capitalize())
+
+	data = await ctx.qc.get_lb()
+	guild = ctx.channel.guild
+
+	# Filter to players who have the matching Discord role
+	filtered = []
+	for row in data:
+		member = guild.get_member(row['user_id'])
+		if member is None:
+			continue
+		member_roles = [r.name.lower() for r in member.roles]
+		if role_key in member_roles:
+			filtered.append(row)
+
+	pages = max(1, ceil(len(filtered) / 12))
+	page_data = filtered[page * 12:(page + 1) * 12]
+	if not page_data:
+		raise bot.Exc.NotFoundError(ctx.qc.gt("Leaderboard is empty."))
+
+	embed = Embed(
+		title=f"{display_name} Leaderboard - page {page+1} of {pages}",
+		colour=Colour(0x7289DA)
+	)
+	table_lines = []
+	for n, row in enumerate(page_data):
+		num = str((page * 12) + n + 1).rjust(2)
+		nick_clean = re.sub(r'[^\x00-\x7F()\[\]-]', '', row['nick'].strip())[:20].ljust(20)
+		wl = f"{row['wins']}-{row['losses']}".rjust(5)
+		total_games = row['wins'] + row['losses']
+		wr = f"({round(row['wins'] / total_games * 100)}%)".rjust(6) if total_games > 0 else "  (0%)"
+		rating = str(row['rating']).rjust(4)
+		rank = ctx.qc.rating_rank(row['rating'])['rank']
+		table_lines.append(f"`{num} {nick_clean} {wl} {wr}`  {rank} {rating}")
+
+	table_lines.insert(0, f"`{'No':>2} {'Nickname':<20} {'W-L':>5} {'WR':>6}`")
+	embed.add_field(name="—", value="\n".join(table_lines), inline=False)
+	await ctx.reply(embed=embed)

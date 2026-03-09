@@ -106,6 +106,25 @@ async def ensure_tables():
 		primary_keys=["guild_id"]
 	))
 
+	await db.ensure_table(dict(
+		tname="season_archive",
+		columns=[
+			dict(cname="id", ctype=db.types.int, autoincrement=True),
+			dict(cname="channel_id", ctype=db.types.int),
+			dict(cname="season_number", ctype=db.types.int),
+			dict(cname="ended_at", ctype=db.types.int),
+			dict(cname="user_id", ctype=db.types.int),
+			dict(cname="nick", ctype=db.types.str),
+			dict(cname="rating", ctype=db.types.int),
+			dict(cname="deviation", ctype=db.types.int),
+			dict(cname="wins", ctype=db.types.int),
+			dict(cname="losses", ctype=db.types.int),
+			dict(cname="draws", ctype=db.types.int),
+			dict(cname="place", ctype=db.types.int)
+		],
+		primary_keys=["id"]
+	))
+
 
 async def check_match_id_counter():
 	"""
@@ -439,6 +458,55 @@ async def replace_player(channel_id, user_id1, user_id2, new_nick):
 	await db.update("qc_players", {'user_id': user_id2, 'nick': new_nick}, where)
 	await db.update("qc_rating_history", {'user_id': user_id2}, where)
 	await db.update("qc_player_matches", {'user_id': user_id2}, where)
+
+
+async def archive_season(channel_id):
+	"""Archive current season data and return season summary."""
+	now = int(time.time())
+
+	# Determine season number
+	last_season = await db.fetchone(
+		"SELECT MAX(season_number) as num FROM `season_archive` WHERE `channel_id`=%s",
+		(channel_id,)
+	)
+	season_number = (last_season['num'] or 0) + 1 if last_season else 1
+
+	# Get all rated players sorted by rating
+	players = await db.select(
+		['user_id', 'nick', 'rating', 'deviation', 'wins', 'losses', 'draws', 'is_hidden'],
+		'qc_players',
+		where={'channel_id': channel_id}, order_by='rating'
+	)
+	rated = [p for p in players if p['rating'] is not None and not p['is_hidden']]
+
+	# Archive each player's final standings
+	archive_rows = []
+	for place, p in enumerate(rated, 1):
+		archive_rows.append(dict(
+			channel_id=channel_id,
+			season_number=season_number,
+			ended_at=now,
+			user_id=p['user_id'],
+			nick=p['nick'] or '?',
+			rating=p['rating'],
+			deviation=p['deviation'],
+			wins=p['wins'],
+			losses=p['losses'],
+			draws=p['draws'],
+			place=place
+		))
+	if archive_rows:
+		await db.insert_many('season_archive', archive_rows)
+
+	# Top 12 with minimum 20 games played
+	qualified = [p for p in rated if (p['wins'] + p['losses'] + p['draws']) >= 20]
+
+	return {
+		'season_number': season_number,
+		'total_players': len(rated),
+		'top_players': qualified[:12],
+		'total_matches': sum(p['wins'] + p['losses'] + p['draws'] for p in rated) // 2
+	}
 
 
 async def qc_stats(channel_id):

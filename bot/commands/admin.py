@@ -1,12 +1,12 @@
 __all__ = [
 	'noadds', 'noadd', 'forgive', 'rating_seed', 'rating_penality', 'rating_hide',
 	'rating_reset', 'rating_snap', 'stats_reset', 'stats_reset_player', 'stats_replace_player',
-	'phrases_add', 'phrases_clear', 'undo_match', 'force_checkin', 'captain_score'
+	'phrases_add', 'phrases_clear', 'undo_match', 'force_checkin', 'captain_score', 'season_end'
 ]
 
 from time import time
 from datetime import timedelta
-from nextcord import Member
+from nextcord import Member, Embed, Colour
 
 from core.utils import seconds_to_str, get_nick
 from core.database import db
@@ -314,3 +314,39 @@ async def captain_score(ctx):
 		await ctx.ignore(ctx.qc.gt("Captain score table has been sent to your DMs."))
 	except Exception as e:
 		raise bot.Exc.PermissionError(ctx.qc.gt("Could not send DM. Please ensure your DMs are open."))
+
+
+async def season_end(ctx):
+	"""Archive current season ratings and reset for a new season."""
+	ctx.check_perms(ctx.Perms.ADMIN)
+
+	# Archive season data
+	summary = await bot.stats.archive_season(ctx.qc.rating.channel_id)
+
+	# Build summary embed before reset
+	embed = Embed(
+		title=f"Season {summary['season_number']} — Final Standings",
+		colour=Colour(0xf5a623),
+		description=f"**{summary['total_players']}** rated players | **{summary['total_matches']}** total matches"
+	)
+
+	if summary['top_players']:
+		podium = []
+		medals = ["🥇", "🥈", "🥉"] + [f"{i}." for i in range(4, 13)]
+		for i, p in enumerate(summary['top_players']):
+			nick = (p['nick'] or '?').strip()[:20]
+			wl = f"{p['wins']}-{p['losses']}"
+			rank = ctx.qc.rating_rank(p['rating'])['rank']
+			podium.append(f"{medals[i]} **{nick}** — {rank} {p['rating']}  ({wl})")
+		embed.add_field(name="Top 12 (20+ games)", value="\n".join(podium), inline=False)
+
+	# Reset ratings, W/L/D, and streak (but preserve history)
+	await ctx.qc.rating.reset()
+	await db.update(
+		'qc_players',
+		dict(wins=0, losses=0, draws=0, streak=0),
+		keys=dict(channel_id=ctx.qc.rating.channel_id)
+	)
+
+	embed.set_footer(text="Ratings and stats have been reset. A new season begins now!")
+	await ctx.reply(embed=embed)

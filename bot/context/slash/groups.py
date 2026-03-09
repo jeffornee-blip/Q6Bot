@@ -31,6 +31,11 @@ async def admin_stats(interaction: Interaction):
 	pass
 
 
+@dc.slash_command(name='season', **guild_kwargs)
+async def admin_season(interaction: Interaction):
+	pass
+
+
 @dc.slash_command(name='noadds', **guild_kwargs)
 async def admin_noadds(interaction: Interaction):
 	pass
