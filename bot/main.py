@@ -120,7 +120,8 @@ async def load_state():
 
 		log.info("Loading state into memory...")
 
-		bot.allow_offline = data.get('allow_offline', {})
+		# JSON converts int keys to strings, convert them back to int
+		bot.allow_offline = {int(k): v for k, v in data.get('allow_offline', {}).items()}
 
 		queues_loaded = 0
 		for qd in data.get('queues', []):

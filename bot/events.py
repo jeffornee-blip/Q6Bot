@@ -111,8 +111,8 @@ async def on_ready():
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="",
-						value="• Fixed database connection stability — bot now retries on connection failure instead of crashing",
+						name="Bug Fix",
+						value="• **Allow Offline** — `/allow_offline` status now correctly persists across bot restarts and redeployments. Previously, offline immunity was lost on every redeploy due to a data type mismatch when saving/loading player IDs from the database.",
 						inline=False
 					)
 					await patch_notes_channel.send(embed=embed)
