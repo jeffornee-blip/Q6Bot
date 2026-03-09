@@ -78,24 +78,35 @@ class Match:
 		# Prepare the Match object
 		match.maps = match.random_maps(match.cfg['maps'], match.cfg['map_count'], queue.last_maps)
 		
-		# Get recent captains for smart captain selection (last 10 matches)
+		# Get last-match captains from in-memory queue tracking (immediate, no DB delay)
+		last_match_captains = getattr(queue, 'last_captains', set())
+		
+		# Also fetch recent captains from DB for scoring penalties
 		recent_captains = {}
 		if match.cfg['pick_captains'] == "smart":
 			try:
 				recent_captains_data = await db.select(
-					('user_id',), 'qc_player_matches',
+					('user_id', 'match_id'), 'qc_player_matches',
 					where={'channel_id': ctx.qc.id, 'is_captain': 1},
 					order_by='match_id DESC',
-					limit=6  # Check recent captains from last ~3 matches
+					limit=6
 				)
-				# Count occurrences of each captain
 				for m in recent_captains_data:
 					user_id = m['user_id']
 					recent_captains[user_id] = recent_captains.get(user_id, 0) + 1
+				# Also merge DB last-match captains into the set (covers bot restart)
+				if recent_captains_data and not last_match_captains:
+					last_match_id = recent_captains_data[0]['match_id']
+					last_match_captains = {m['user_id'] for m in recent_captains_data if m['match_id'] == last_match_id}
 			except:
-				pass  # If query fails, continue without recent captains history
+				pass
 		
-		match.init_captains(match.cfg['pick_captains'], match.cfg['captains_role_id'], recent_captains)
+		match.init_captains(match.cfg['pick_captains'], match.cfg['captains_role_id'], recent_captains, last_match_captains)
+		
+		# Immediately store this match's captains on the queue for next-match exclusion
+		if match.cfg['pick_captains'] == "smart":
+			queue.last_captains = {p.id for p in match.captains}
+		
 		match.init_teams(match.cfg['pick_teams'])
 		if match.ranked:
 			match.states.append(match.WAITING_REPORT)
@@ -296,25 +307,38 @@ class Match:
 		
 		return score
 
-	def _select_captains_smart(self, recent_captains=None):
+	def _select_captains_smart(self, recent_captains=None, last_match_captains=None):
 		"""Select best captain pair based on priority criteria"""
 		if recent_captains is None:
 			recent_captains = {}
+		if last_match_captains is None:
+			last_match_captains = set()
 		
 		best_pair = None
 		best_score = float('-inf')
 		
-		# Score all possible pairs
+		# Score all possible pairs, hard-excluding last-match captains
 		for i, p1 in enumerate(self.players):
 			for p2 in self.players[i+1:]:
+				if p1.id in last_match_captains or p2.id in last_match_captains:
+					continue
 				score = self._score_captain_pair(p1, p2, recent_captains)
 				if score > best_score:
 					best_score = score
 					best_pair = (p1, p2)
 		
+		# Fallback: if excluding last-match captains left no valid pairs, allow them
+		if best_pair is None:
+			for i, p1 in enumerate(self.players):
+				for p2 in self.players[i+1:]:
+					score = self._score_captain_pair(p1, p2, recent_captains)
+					if score > best_score:
+						best_score = score
+						best_pair = (p1, p2)
+		
 		return list(best_pair) if best_pair else self.sort_players(self.players)[:2]
 
-	def init_captains(self, pick_captains, captains_role_id, recent_captains=None):
+	def init_captains(self, pick_captains, captains_role_id, recent_captains=None, last_match_captains=None):
 		if pick_captains == "by role and rating":
 			self.captains = self.sort_players(self.players)[:2]
 		elif pick_captains == "fair pairs":
@@ -329,7 +353,7 @@ class Match:
 				rand, key=lambda p: self.cfg['captains_role_id'] in [role.id for role in p.roles], reverse=True
 			)[:2]
 		elif pick_captains == "smart":
-			self.captains = self._select_captains_smart(recent_captains or {})
+			self.captains = self._select_captains_smart(recent_captains or {}, last_match_captains or set())
 		else:
 			self.captains = self.sort_players(self.players)[:2]
 

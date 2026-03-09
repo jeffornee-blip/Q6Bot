@@ -93,10 +93,16 @@ async def ensure_tables():
 			dict(cname="user_id", ctype=db.types.int),
 			dict(cname="nick", ctype=db.types.str),
 			dict(cname="team", ctype=db.types.bool),
-			dict(cname="is_captain", ctype=db.types.bool)
+			dict(cname="is_captain", ctype=db.types.bool, default=0)
 		],
 		primary_keys=["match_id", "user_id"]
 	))
+
+	# Backfill any NULL is_captain values from before the column existed
+	try:
+		await db.execute("UPDATE `qc_player_matches` SET `is_captain` = 0 WHERE `is_captain` IS NULL")
+	except:
+		pass
 
 	await db.ensure_table(dict(
 		tname="disabled_guilds",
@@ -175,17 +181,10 @@ async def register_match_unranked(ctx, m):
 			team = None
 
 		is_captain = 1 if p in m.captains else 0
-		try:
-			await db.insert(
-				'qc_player_matches',
-				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
-			)
-		except Exception:
-			# Fallback if is_captain column doesn't exist
-			await db.insert(
-				'qc_player_matches',
-				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
-			)
+		await db.insert(
+			'qc_player_matches',
+			dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
+		)
 
 
 async def register_match_ranked(ctx, m):
@@ -342,11 +341,7 @@ async def register_match_ranked(ctx, m):
 				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team, is_captain=is_captain)
 			)
 		except Exception:
-			# Fallback if is_captain column doesn't exist
-			await db.insert(
-				'qc_player_matches',
-				dict(match_id=m.id, channel_id=m.qc.id, user_id=p.id, nick=nick, team=team)
-			)
+			pass
 		
 		await db.insert('qc_rating_history', dict(
 			channel_id=m.qc.rating.channel_id,

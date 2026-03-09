@@ -185,10 +185,11 @@ async def captain_score(ctx):
 	
 	# Get recent captains data from the database (for penalty calculation)
 	recent_captains = {}
+	last_match_captains = getattr(match.queue, 'last_captains', set())
 	if match.cfg['pick_captains'] == "smart":
 		try:
 			recent_captains_data = await db.select(
-				('user_id',), 'qc_player_matches',
+				('user_id', 'match_id'), 'qc_player_matches',
 				where={'channel_id': ctx.qc.id, 'is_captain': 1},
 				order_by='match_id DESC',
 				limit=6
@@ -196,6 +197,10 @@ async def captain_score(ctx):
 			for m in recent_captains_data:
 				user_id = m['user_id']
 				recent_captains[user_id] = recent_captains.get(user_id, 0) + 1
+			# Merge DB last-match captains if in-memory is empty (bot restart)
+			if recent_captains_data and not last_match_captains:
+				last_match_id = recent_captains_data[0]['match_id']
+				last_match_captains = {m['user_id'] for m in recent_captains_data if m['match_id'] == last_match_id}
 		except:
 			pass
 	
@@ -244,6 +249,9 @@ async def captain_score(ctx):
 			if p2.id in recent_captains:
 				recent_penalty -= 300 * recent_captains[p2.id]
 			
+			# Check if either player is blocked (was captain last match)
+			is_blocked = p1.id in last_match_captains or p2.id in last_match_captains
+			
 			# Total score
 			total_score = captain_bonus + mmr_similarity + role_bonus + recent_penalty
 			
@@ -258,7 +266,8 @@ async def captain_score(ctx):
 				'mmr_similarity': int(mmr_similarity),
 				'role_bonus': role_bonus,
 				'recent_penalty': recent_penalty,
-				'total_score': int(total_score)
+				'total_score': int(total_score),
+				'is_blocked': is_blocked
 			})
 	
 	# Sort by total score descending
@@ -301,7 +310,7 @@ async def captain_score(ctx):
 		
 		captain_bonus_str = f"+{score_data['captain_bonus']}"
 		recent_penalty_str = f"{score_data['recent_penalty']}"
-		total_str = f"{score_data['total_score']}"
+		total_str = f"BLOCKED" if score_data['is_blocked'] else f"{score_data['total_score']}"
 		
 		line = f"{players_str:<{col_players}} {mmr_str:<{col_mmr}} {mmr_bonus_str:<{col_mmr_bonus}} {roles_str:<{col_roles}} {role_bonus_str:<{col_role_bonus}} {captain_bonus_str:<{col_captain_bonus}} {recent_penalty_str:<{col_recent_penalty}} {total_str:<{col_total}}"
 		lines.append(line)

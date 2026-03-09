@@ -327,6 +327,7 @@ class PickupQueue:
 		self.id = self.cfg.p_key
 		self.queue = []
 		self.last_maps = []
+		self.last_captains = set()
 
 	@property
 	def name(self):

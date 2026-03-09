@@ -111,23 +111,8 @@ async def on_ready():
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="New — Season System",
-						value="• `/season end` — Admins can now end the current season, archiving all player standings to a permanent record. Displays a Top 12 podium (20+ games required) with final ratings, then resets all ratings, W/L/D, and streaks for a fresh start. Match and rating history are preserved.",
-						inline=False
-					)
-					embed.add_field(
-						name="New — Role Leaderboards",
-						value="• `/leaderboard_chaser`, `/leaderboard_seeker`, `/leaderboard_beater`, `/leaderboard_keeper`, `/leaderboard_flex` — View the leaderboard filtered by player role. Also available as message commands with aliases `!lbc`, `!lbs`, `!lbb`, `!lbk`, `!lbf`. Supports pagination.",
-						inline=False
-					)
-					embed.add_field(
-						name="Improved — Player Profile (`/rank`)",
-						value="• **Rating Graph** — Your last 20 rating changes displayed as a visual sparkline with start and end values.\n• **Favorite Teammates** — Shows your top 3 most frequent same-team co-players and how many games you've shared.",
-						inline=False
-					)
-					embed.add_field(
-						name="Improved — 41 Alert Countdown",
-						value="• The ⚠️ 41 Alert now only triggers when a draft actually completes during the :33–:41 window, instead of firing every hour regardless.\n• Continuously monitors for completed drafts — if a draft finishes at any point between :33 and :41, the alert is sent immediately.\n• The ✅ Safe to Queue message at :42 only appears if the alert was triggered.",
+						name="Fixed — Smart Captain Selection",
+						value="• Captains from the previous match in a queue channel are now **hard-blocked** from being selected as captain in the very next game. No more back-to-back captains.\n• Fixed a bug where captain history (`is_captain`) was never actually read from the database — all historical rows had `NULL` values due to a missing column default. Existing data is now backfilled on startup.\n• Removed a silent fallback that could drop captain data on transient DB errors.",
 						inline=False
 					)
 					await patch_notes_channel.send(embed=embed)
