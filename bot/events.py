@@ -111,8 +111,8 @@ async def on_ready():
 						color=Color.blurple()
 					)
 					embed.add_field(
-						name="Fixed — Smart Captain Selection",
-						value="• Captains from the previous match in a queue channel are now **hard-blocked** from being selected as captain in the very next game. No more back-to-back captains.\n• Fixed a bug where captain history (`is_captain`) was never actually read from the database — all historical rows had `NULL` values due to a missing column default. Existing data is now backfilled on startup.\n• Removed a silent fallback that could drop captain data on transient DB errors.",
+						name="Evergreen Mode",
+						value="Just like Quidditch Champions, Q6 bot is now in evergreen mode. I don't plan on working on it any longer. You can use `/bot_request` in the feedback channel and I may get to your requests. Or I may not. Your guess is as good as mine.\n\n- Rajon",
 						inline=False
 					)
 					await patch_notes_channel.send(embed=embed)

@@ -1,7 +1,7 @@
 from typing import Callable
 from asyncio import wait_for, shield
 from asyncio.exceptions import TimeoutError as aTimeoutError
-from nextcord import Interaction, SlashOption, Member, TextChannel
+from nextcord import Embed, Interaction, SlashOption, Member, TextChannel
 import traceback
 import time
 
@@ -782,4 +782,46 @@ async def _lb_flex(
 		interaction: Interaction,
 		page: int = SlashOption(required=False),
 ): await run_slash(bot.commands.leaderboard_by_role, interaction=interaction, role_name='flex', page=page)
+
+
+# bot_request — channel-restricted feedback command
+
+BOT_REQUEST_CHANNEL_ID = 1339241222941704245
+
+
+@dc.slash_command(name='bot_request', description='Submit a feature request or suggestion for the bot.', **guild_kwargs)
+async def _bot_request(
+	interaction: Interaction,
+	request: str = SlashOption(
+		name="request",
+		description="Describe your request or suggestion (max 1500 characters).",
+		required=True,
+		max_length=1500
+	)
+):
+	if interaction.channel_id != BOT_REQUEST_CHANNEL_ID:
+		await interaction.response.send_message(
+			embed=error_embed(
+				"This command can only be used in the <#{}> channel.".format(BOT_REQUEST_CHANNEL_ID),
+				title="Wrong Channel"
+			),
+			ephemeral=True
+		)
+		return
+
+	log.info("Bot request from {} ({}): {}".format(
+		get_nick(interaction.user), interaction.user.id, request
+	))
+
+	embed = Embed(
+		title="\u2709\ufe0f Request Submitted",
+		description=(
+			"**Your request has been submitted. Thank you for the feedback!**\n\n"
+			">>> {}"
+		).format(request),
+		color=0x32cd32
+	)
+	embed.set_footer(text="Submitted by {}".format(get_nick(interaction.user)))
+
+	await interaction.response.send_message(embed=embed)
 
