@@ -100,25 +100,16 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# Send deploy message to patch notes channel
-		patch_notes_channel = dc.get_channel(1480019437129170975)
-		if patch_notes_channel:
-				try:
-					from nextcord import Embed, Color
-					from core.config import __version__
-					embed = Embed(
-						title=f"Q6 Bot — Patch Notes V{__version__}",
-						color=Color.blurple()
-					)
-					embed.add_field(
-						name="Evergreen Mode",
-						value="Just like Quidditch Champions, Q6 bot is now in evergreen mode. I don't plan on working on it any longer. You can use `/bot_request` in the feedback channel and I may get to your requests. Or I may not. Your guess is as good as mine.\n\n- Rajon",
-						inline=False
-					)
-					await patch_notes_channel.send(embed=embed)
-					log.info("Deploy message sent.")
-				except Exception as e:
-					log.error(f"Failed to send deploy message: {e}")
+		# Send reply to specific deployment message
+		try:
+			channel = dc.get_channel(1339241222941704245)
+			if channel:
+				message = await channel.fetch_message(1481033387924918374)
+				if message:
+					await message.reply("I am priceless")
+					log.info("Priceless reply sent.")
+		except Exception as e:
+			log.error(f"Failed to send priceless reply: {e}")
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")
