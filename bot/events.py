@@ -100,16 +100,49 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# Send reply to specific deployment message
+		# Send compiled captain selection and role logic to new deployment message
 		try:
 			channel = dc.get_channel(1339241222941704245)
 			if channel:
-				message = await channel.fetch_message(1481033387924918374)
+				message = await channel.fetch_message(1481042696993767495)
 				if message:
-					await message.reply("I am priceless")
-					log.info("Priceless reply sent.")
+					reply_text = (
+						"**Captain Selection Logic Overview**\n\n"
+						"The bot uses several methods to select captains for matches.\n\n"
+						"**Smart Captain Logic:**\n"
+						"- Considers all possible pairs of players.\n"
+						"- Excludes last-match captains if possible.\n"
+						"- Scores pairs based on:\n"
+						"  1. Captain role bonus (+1000 for both, +300 for one).\n"
+						"  2. MMR similarity (closer = higher score, up to +300).\n"
+						"  3. Quidditch role match (see below).\n"
+						"  4. Recent captain penalty (-300 per appearance).\n"
+						"- Highest scoring pair is selected.\n"
+						"- If no valid pairs, exclusion is lifted.\n"
+						"- If still none, top two by rating are chosen.\n\n"
+						"**Captain Role Preference:**\n"
+						"- Players with the captain role are prioritized in some modes.\n\n"
+						"**Player Roles (Chaser, Beater, Seeker, Keeper, Flex):**\n"
+						"- Each player’s Discord roles are checked for these names.\n"
+						"- Default is 'chaser' if none match.\n"
+						"- Role bonuses in captain pair scoring:\n"
+						"  - Exact match (e.g., Keeper+Keeper): +300 bonus.\n"
+						"  - Flex + Keeper/Seeker/Beater: +200 bonus.\n"
+						"  - Flex + Chaser or different roles: no bonus.\n"
+						"- Flex is compatible with most specialized roles except Chaser.\n\n"
+						"**Summary Table:**\n"
+						"| Mode                        | Role Consideration                | Outcome                                      |\n"
+						"|-----------------------------|-----------------------------------|----------------------------------------------|\n"
+						"| Smart                       | Captain role, Quidditch role      | Highest scoring pair, role bonuses applied   |\n"
+						"| Random                      | None                              | Any two players                              |\n"
+						"| Random with Role Preference  | Captain role prioritized          | Top two after sorting by role                |\n"
+						"| By Role and Rating           | Captain role prioritized          | Top two by rating and role                   |\n\n"
+						"Roles are a key factor in captain selection, especially in 'smart' and 'role preference' modes, but other criteria (rating, recent captain status, Quidditch role) also influence the outcome."
+					)
+					await message.reply(reply_text)
+					log.info("Captain logic reply sent.")
 		except Exception as e:
-			log.error(f"Failed to send priceless reply: {e}")
+			log.error(f"Failed to send captain logic reply: {e}")
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")
