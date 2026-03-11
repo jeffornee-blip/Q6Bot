@@ -11,6 +11,7 @@ from core.config import cfg
 import bot
 
 MAX_EXPIRE_TIME = timedelta(hours=12)
+DEFAULT_EXPIRE_TIME = timedelta(minutes=30)
 
 
 async def auto_ready(ctx):
@@ -27,14 +28,8 @@ async def auto_ready(ctx):
 
 
 async def expire(ctx, duration: timedelta = None):
-	if not duration:
-		if task := bot.expire.get(ctx.qc, ctx.author):
-			await ctx.reply(ctx.qc.gt("You have {duration} expire time left.").format(
-				duration=seconds_to_str(task.at - int(time()))
-			))
-			return
-		await ctx.reply(ctx.qc.gt("You don't have an expire timer set right now."))
-		return
+	if duration is None:
+		duration = DEFAULT_EXPIRE_TIME
 
 	if duration > MAX_EXPIRE_TIME:
 		raise bot.Exc.ValueError(ctx.qc.gt("Expire time must be less than {time}.".format(
@@ -42,8 +37,8 @@ async def expire(ctx, duration: timedelta = None):
 		)))
 
 	bot.expire.set(ctx.qc, ctx.author, duration.total_seconds())
-	await ctx.success(ctx.qc.gt("Set your expire time to {duration}.").format(
-		duration=duration.__str__()
+	await ctx.success(ctx.qc.gt("You will be removed after {duration}.").format(
+		duration=seconds_to_str(int(duration.total_seconds()))
 	))
 
 

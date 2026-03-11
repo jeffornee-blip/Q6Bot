@@ -672,8 +672,8 @@ async def _auto_ready(
 	await run_slash(_run, interaction=interaction)
 
 
-@dc.slash_command(name='expire', description='Set or show your current expire timer.', **guild_kwargs)
-async def _expire(
+@dc.slash_command(name='remove_after', description='Set a timer to be removed from queue (default: 30 min).', **guild_kwargs)
+async def _remove_after(
 		interaction: Interaction,
 		duration: str = SlashOption(required=False)
 ):
@@ -685,8 +685,8 @@ async def _expire(
 	await run_slash(_run, interaction=interaction, _duration=duration)
 
 
-@dc.slash_command(name='expire_default', description='Set or show your default expire timer.', **guild_kwargs)
-async def _default_expire(
+@dc.slash_command(name='remove_after_default', description='Set or show your default expire timer.', **guild_kwargs)
+async def _default_remove_after(
 		interaction: Interaction,
 		duration: str = SlashOption(required=False),
 		afk: bool = SlashOption(required=False),

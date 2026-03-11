@@ -11,7 +11,7 @@
 | /maps                 | Show queue map list                                     |
 | /map                  | Show random map from a queue map list                   |
 | /auto_ready           | Confirm check-in automatically on next queue start      |
-| /expire               | Show or set your current expire timer                   |
+| /remove_after          | Set a timer to be removed from queue (default: 30 min)  |
 
 #### Matches
 | command               | description                                             |
@@ -29,7 +29,7 @@
 | command               | description                                             |
 |-----------------------|---------------------------------------------------------|
 | /switch_dms           | Toggle DM notifications                                 |
-| /expire_default       | Configure your default auto-remove behaviour            |
+| /remove_after_default  | Configure your default auto-remove behaviour            |
 | /subscribe            | Subscribe to queue or channel promotion roles           |
 | /unsubscribe          | Unsubscribe from queue or channel promotion roles       |
 | /nick                 | Change your nick with rating prefix included            |

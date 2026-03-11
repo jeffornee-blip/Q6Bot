@@ -24,7 +24,7 @@
 | !rank           | [`@user`]               | Show ranking for the specified user                       |
 | !lb             | [`page #`]              | Show the leaderboard page specified (top 12)              |
 | !slb            | [`page #`]              | Show the season leaderboard (players with 20+ games)      |
-| !expire         |                       | Show your current expire timer                            |
+| !remove_after   |                       | Set a 30-minute removal timer (default)                   |
 | !matches        |                       | Show active matches on the channel                        |
 | !lastgame / !lg | [`queue` / `@user`]         | Show last match played                                    |
 
@@ -39,7 +39,7 @@
 #### Personal settings
 | command           | arg1                    | description                                                 |
 |-------------------|-------------------------|-------------------------------------------------------------|
-| !expire           | `duration`              | Sets your current expire timer                              |
+| !remove_after     | `duration`              | Set a custom removal timer                                  |
 | !ao               |                         | Switch offline immunity for active queues                   |
 | !ar / !auto_ready | [`duration`]            | Confirm next match check-in automatically                   |
 

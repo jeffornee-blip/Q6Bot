@@ -177,8 +177,8 @@ async def _ao(ctx: MessageContext, args: str = None):
 	await bot.commands.allow_offline(ctx)
 
 
-@message_command('expire')
-async def _expire(ctx: MessageContext, args: str = None):
+@message_command('remove_after')
+async def _remove_after(ctx: MessageContext, args: str = None):
 	duration = None
 	if args:
 		try:

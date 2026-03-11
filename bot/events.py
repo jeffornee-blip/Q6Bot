@@ -102,7 +102,14 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# ...existing code...
+		# One-time startup reply
+		try:
+			startup_channel = dc.get_channel(1466135433959309457)
+			if startup_channel:
+				startup_msg = await startup_channel.fetch_message(1481353522774544454)
+				await startup_msg.reply("try it now")
+		except Exception as e:
+			log.error(f"Failed to send startup reply: {e}")
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")
