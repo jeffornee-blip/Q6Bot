@@ -142,6 +142,7 @@ async def rank(ctx, player: Member = None):
 			where=dict(user_id=target.id, channel_id=ctx.qc.rating.channel_id),
 			order_by='id', limit=20
 		)
+		history = list(reversed(history))
 		if len(history) >= 2:
 			ratings = [h['rating_before'] for h in history]
 			ratings.append(history[-1]['rating_before'] + history[-1]['rating_change'])
