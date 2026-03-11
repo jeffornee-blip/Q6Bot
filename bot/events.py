@@ -102,11 +102,6 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# Send deployment message
-		deploy_channel = dc.get_channel(1466135433959309457)
-		if deploy_channel:
-			await deploy_channel.send("/rank should work now, sorry")
-
 		# ...existing code...
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True

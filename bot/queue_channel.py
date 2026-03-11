@@ -480,8 +480,8 @@ class QueueChannel:
 		elif reason and ctx:
 			await ctx.ignore(self.gt("Action had no effect"))
 
-	def rating_rank(self, rating):
-		table = self._ranks_table
+	def rating_rank(self, rating):		if rating is None:
+			return {'rank': '〈?〉', 'rating': 0, 'role': None}		table = self._ranks_table
 		below = sorted(
 			(rank for rank in table if rank['rating'] <= rating),
 			key=lambda r: r['rating'], reverse=True

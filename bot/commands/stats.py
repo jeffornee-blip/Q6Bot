@@ -39,6 +39,9 @@ async def last_game(ctx, queue: str = None, player: Member = None, match_id: int
 			['*'], "qc_matches", where=dict(channel_id=ctx.qc.id), order_by="match_id", limit=1
 		)
 
+	if not lg:
+		raise bot.Exc.NotFoundError(ctx.qc.gt("No matches found."))
+
 	players = await db.select(
 		['user_id', 'nick', 'team'], "qc_player_matches",
 		where=dict(match_id=lg['match_id'])
@@ -115,7 +118,7 @@ async def rank(ctx, player: Member = None):
 		embed = Embed(title=f"__{get_nick(target)}__", colour=Colour(0x7289DA))
 		embed.add_field(name="№", value=f"**{place}**", inline=True)
 		embed.add_field(name=ctx.qc.gt("Matches"), value=f"**{(p['wins'] + p['losses'] + p['draws'])}**", inline=True)
-		if p['rating']:
+		if p['rating'] is not None:
 			embed.add_field(name=ctx.qc.gt("Rank"), value=f"{ctx.qc.rating_rank(p['rating'])['rank']}", inline=True)
 			embed.add_field(name=ctx.qc.gt("Rating"), value=f"**{p['rating']}**±{p['deviation']}")
 		else:
