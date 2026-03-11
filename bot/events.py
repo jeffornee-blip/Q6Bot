@@ -83,18 +83,7 @@ async def on_reaction_remove(reaction, user):  # FIXME: this event does not get 
 
 @dc.event
 async def on_ready():
-	# Send deployment message to specified channel
-	try:
-		channel = dc.get_channel(1339241222941704245)
-		if channel:
-			await channel.send(
-				"The goal is not to pick the most advantageous captains for you Pumkin.. the goal is to find the best pair. "
-				"A chaser/chaser pair is going to score higher than a chaser/flex pair. If I have to reply to you again I am deducting MMR for every character I have to type. "
-				"Sorry n e o, the bot will not let my PantsGrab from the terminal."
-			)
-			log.info("Deployment message sent.")
-	except Exception as e:
-		log.error(f"Failed to send deployment message: {e}")
+	# ...existing code...
 	await dc.change_presence(activity=Activity(type=ActivityType.watching, name=cfg.STATUS))
 	if not bot.bot_was_ready:  # Connected for the first time, load everything
 		log.info(f"Logged in discord as '{dc.user.name}#{dc.user.discriminator}'.")
@@ -112,6 +101,11 @@ async def on_ready():
 		bot.bot_was_ready = True
 		bot.bot_ready = True
 		log.info("Done.")
+
+		# Send deployment message
+		deploy_channel = dc.get_channel(1466135433959309457)
+		if deploy_channel:
+			await deploy_channel.send("/rank should work now, sorry")
 
 		# ...existing code...
 	else:  # Reconnected, fetch new channel objects

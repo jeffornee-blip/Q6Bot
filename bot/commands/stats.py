@@ -149,17 +149,6 @@ async def rank(ctx, player: Member = None):
 				inline=False
 			)
 
-		# Favorite teammates (most frequent co-players on same team)
-		teammates = await db.fetchall(
-			"SELECT pm2.nick, COUNT(*) as cnt FROM `qc_player_matches` pm1 "
-			"JOIN `qc_player_matches` pm2 ON pm1.match_id = pm2.match_id AND pm1.team = pm2.team "
-			"WHERE pm1.channel_id = %s AND pm1.user_id = %s AND pm2.user_id != %s "
-			"GROUP BY pm2.user_id ORDER BY cnt DESC LIMIT 3",
-			(ctx.qc.id, target.id, target.id)
-		)
-		if teammates:
-			tm_lines = [f"**{t['nick'].strip()[:20]}** ({t['cnt']} games)" for t in teammates]
-			embed.add_field(name=ctx.qc.gt("Favorite Teammates"), value="\n".join(tm_lines), inline=False)
 
 		# Last changes
 		changes = await db.select(
