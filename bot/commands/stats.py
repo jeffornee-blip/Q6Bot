@@ -148,7 +148,7 @@ async def rank(ctx, player: Member = None):
 			ratings.append(history[-1]['rating_before'] + history[-1]['rating_change'])
 			graph = _rating_sparkline(ratings)
 			embed.add_field(
-				name=ctx.qc.gt("Rating Graph") + f"  ({ratings[0]} → {ratings[-1]})",
+				name=ctx.qc.gt("Rating Graph") + f" (Last {len(history)} Games)  ({ratings[0]} → {ratings[-1]})",
 				value=graph,
 				inline=False
 			)
