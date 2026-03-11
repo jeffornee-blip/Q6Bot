@@ -102,14 +102,15 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# One-time startup reply
+		# Deployment reply
 		try:
-			startup_channel = dc.get_channel(1466135433959309457)
-			if startup_channel:
-				startup_msg = await startup_channel.fetch_message(1481353522774544454)
-				await startup_msg.reply("try it now")
+			deploy_channel = dc.get_channel(1466135433959309457)
+			if deploy_channel:
+				deploy_msg = await deploy_channel.fetch_message(1481357694085365820)
+				await deploy_msg.reply("you just set your default, you have to actually use /remove_after")
 		except Exception as e:
-			log.error(f"Failed to send startup reply: {e}")
+			log.error(f"Failed to send deployment reply: {e}")
+
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
 		log.info("Reconnected to discord.")
