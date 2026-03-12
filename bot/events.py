@@ -219,16 +219,6 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# Send deployment reply
-		try:
-			deploy_channel = dc.get_channel(1466135433959309457)
-			if deploy_channel:
-				deploy_msg = await deploy_channel.fetch_message(1481520692574031933)
-				if deploy_msg:
-					await deploy_msg.reply("You are insinuating that the 5th pick was more responsible for the loss than the 1st and should lose more? I disagree with your logic, human.")
-		except Exception as e:
-			log.error(f"Failed to send deployment reply: {e}")
-
 		# DM the owner on startup
 		try:
 			if cfg.DC_OWNER_ID:
