@@ -102,12 +102,13 @@ async def on_ready():
 		bot.bot_ready = True
 		log.info("Done.")
 
-		# Deployment reply
+		# Send deployment reply
 		try:
 			deploy_channel = dc.get_channel(1466135433959309457)
 			if deploy_channel:
-				deploy_msg = await deploy_channel.fetch_message(1481357694085365820)
-				await deploy_msg.reply("you just set your default, you have to actually use /remove_after")
+				deploy_msg = await deploy_channel.fetch_message(1481520692574031933)
+				if deploy_msg:
+					await deploy_msg.reply("You are insinuating that the 5th pick was more responsible for the loss than the 1st and should lose more? I disagree with your logic, human.")
 		except Exception as e:
 			log.error(f"Failed to send deployment reply: {e}")
 
