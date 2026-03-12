@@ -35,6 +35,13 @@ async def on_think(frame_time):
 
 async def handle_owner_dm(message):
 	"""Handle DM commands from the bot owner."""
+	try:
+		await _handle_owner_dm(message)
+	except Exception as e:
+		await message.channel.send(f"Error: {e}")
+
+
+async def _handle_owner_dm(message):
 	text = message.content.strip()
 	parts = text.split(None, 1)
 	cmd = parts[0].lower() if parts else ""
@@ -129,14 +136,17 @@ async def handle_owner_dm(message):
 			count = min(parse_id(parts[2]), 20) if len(parts) > 2 else 5
 		except ValueError:
 			count = 5
-		lines = []
-		async for msg in channel.history(limit=count):
-			preview = msg.content[:100] if msg.content else "(no text)"
-			lines.append(f"`{msg.id}` **{msg.author.name}**: {preview}")
-		if lines:
-			await message.channel.send("\n".join(reversed(lines)))
-		else:
-			await message.channel.send("No messages found.")
+		try:
+			lines = []
+			async for msg in channel.history(limit=count):
+				preview = msg.content[:100] if msg.content else "(no text)"
+				lines.append(f"`{msg.id}` **{msg.author.name}**: {preview}")
+			if lines:
+				await message.channel.send("\n".join(reversed(lines)))
+			else:
+				await message.channel.send("No messages found.")
+		except Exception as e:
+			await message.channel.send(f"Error reading channel: {e}")
 
 	elif cmd == "!ownerhelp":
 		await message.channel.send(
