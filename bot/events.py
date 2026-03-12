@@ -39,6 +39,10 @@ async def handle_owner_dm(message):
 	parts = text.split(None, 1)
 	cmd = parts[0].lower() if parts else ""
 
+	def parse_id(s):
+		"""Strip <>, [], #, and whitespace from an ID string, then convert to int."""
+		return int(s.strip("<>[]#"))
+
 	if cmd == "!channels":
 		lines = []
 		for guild in dc.guilds:
@@ -65,7 +69,7 @@ async def handle_owner_dm(message):
 			await message.channel.send("Usage: `!send <channel_id> <message>`")
 			return
 		try:
-			channel = dc.get_channel(int(parts[1]))
+			channel = dc.get_channel(parse_id(parts[1]))
 		except ValueError:
 			await message.channel.send("Invalid channel ID.")
 			return
@@ -82,8 +86,8 @@ async def handle_owner_dm(message):
 			await message.channel.send("Usage: `!reply <channel_id> <message_id> <message>`")
 			return
 		try:
-			channel = dc.get_channel(int(parts[1]))
-			target = await channel.fetch_message(int(parts[2]))
+			channel = dc.get_channel(parse_id(parts[1]))
+			target = await channel.fetch_message(parse_id(parts[2]))
 		except (ValueError, AttributeError):
 			await message.channel.send("Invalid channel or message ID.")
 			return
@@ -100,7 +104,7 @@ async def handle_owner_dm(message):
 			await message.channel.send("Usage: `!dm <user_id> <message>`")
 			return
 		try:
-			user = await dc.fetch_user(int(parts[1]))
+			user = await dc.fetch_user(parse_id(parts[1]))
 		except (ValueError, Exception) as e:
 			await message.channel.send(f"Could not find user: {e}")
 			return
@@ -114,14 +118,17 @@ async def handle_owner_dm(message):
 			await message.channel.send("Usage: `!recent <channel_id> [count]`")
 			return
 		try:
-			channel = dc.get_channel(int(parts[1]))
+			channel = dc.get_channel(parse_id(parts[1]))
 		except ValueError:
 			await message.channel.send("Invalid channel ID.")
 			return
 		if not channel:
 			await message.channel.send("Channel not found.")
 			return
-		count = min(int(parts[2]), 20) if len(parts) > 2 else 5
+		try:
+			count = min(parse_id(parts[2]), 20) if len(parts) > 2 else 5
+		except ValueError:
+			count = 5
 		lines = []
 		async for msg in channel.history(limit=count):
 			preview = msg.content[:100] if msg.content else "(no text)"
