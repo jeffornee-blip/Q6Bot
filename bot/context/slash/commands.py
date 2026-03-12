@@ -60,9 +60,15 @@ async def run_slash_coro(ctx: SlashContext, coro: Callable, **kwargs):
 	try:
 		await coro(ctx, **kwargs)
 	except bot.Exc.PubobotException as e:
-		await ctx.error(str(e), title=e.__class__.__name__)
+		try:
+			await ctx.error(str(e), title=e.__class__.__name__)
+		except Exception:
+			log.error(f"Failed to send error response for {coro.__name__}: {e}")
 	except Exception as e:
-		await ctx.error(str(e), title="RuntimeError")
+		try:
+			await ctx.error(str(e), title="RuntimeError")
+		except Exception:
+			log.error(f"Failed to send error response for {coro.__name__}: {e}")
 		qc_id = ctx.qc.id if hasattr(ctx, 'qc') and ctx.qc else "unknown"
 		log.error("\n".join([
 			f"Error processing /slash command {coro.__name__}.",
