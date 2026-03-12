@@ -33,10 +33,127 @@ async def on_think(frame_time):
 	await bot.scheduler.think(frame_time)
 
 
+async def handle_owner_dm(message):
+	"""Handle DM commands from the bot owner."""
+	text = message.content.strip()
+	parts = text.split(None, 1)
+	cmd = parts[0].lower() if parts else ""
+
+	if cmd == "!channels":
+		lines = []
+		for guild in dc.guilds:
+			lines.append(f"**{guild.name}** (ID: {guild.id})")
+			for ch in guild.text_channels:
+				lines.append(f"  #{ch.name} — `{ch.id}`")
+		if not lines:
+			await message.channel.send("Bot is not in any guilds.")
+		else:
+			# Split into chunks to stay under 2000 char limit
+			chunk = ""
+			for line in lines:
+				if len(chunk) + len(line) + 1 > 1900:
+					await message.channel.send(chunk)
+					chunk = ""
+				chunk += line + "\n"
+			if chunk:
+				await message.channel.send(chunk)
+
+	elif cmd == "!send":
+		# !send <channel_id> <message>
+		parts = text.split(None, 2)
+		if len(parts) < 3:
+			await message.channel.send("Usage: `!send <channel_id> <message>`")
+			return
+		try:
+			channel = dc.get_channel(int(parts[1]))
+		except ValueError:
+			await message.channel.send("Invalid channel ID.")
+			return
+		if not channel:
+			await message.channel.send("Channel not found.")
+			return
+		sent = await channel.send(parts[2])
+		await message.channel.send(f"Sent in #{channel.name} (msg ID: `{sent.id}`)")
+
+	elif cmd == "!reply":
+		# !reply <channel_id> <message_id> <message>
+		parts = text.split(None, 3)
+		if len(parts) < 4:
+			await message.channel.send("Usage: `!reply <channel_id> <message_id> <message>`")
+			return
+		try:
+			channel = dc.get_channel(int(parts[1]))
+			target = await channel.fetch_message(int(parts[2]))
+		except (ValueError, AttributeError):
+			await message.channel.send("Invalid channel or message ID.")
+			return
+		except Exception as e:
+			await message.channel.send(f"Error: {e}")
+			return
+		sent = await target.reply(parts[3])
+		await message.channel.send(f"Replied in #{channel.name} (msg ID: `{sent.id}`)")
+
+	elif cmd == "!dm":
+		# !dm <user_id> <message>
+		parts = text.split(None, 2)
+		if len(parts) < 3:
+			await message.channel.send("Usage: `!dm <user_id> <message>`")
+			return
+		try:
+			user = await dc.fetch_user(int(parts[1]))
+		except (ValueError, Exception) as e:
+			await message.channel.send(f"Could not find user: {e}")
+			return
+		await user.send(parts[2])
+		await message.channel.send(f"DM sent to {user.name}.")
+
+	elif cmd == "!recent":
+		# !recent <channel_id> [count] — show recent messages
+		parts = text.split()
+		if len(parts) < 2:
+			await message.channel.send("Usage: `!recent <channel_id> [count]`")
+			return
+		try:
+			channel = dc.get_channel(int(parts[1]))
+		except ValueError:
+			await message.channel.send("Invalid channel ID.")
+			return
+		if not channel:
+			await message.channel.send("Channel not found.")
+			return
+		count = min(int(parts[2]), 20) if len(parts) > 2 else 5
+		lines = []
+		async for msg in channel.history(limit=count):
+			preview = msg.content[:100] if msg.content else "(no text)"
+			lines.append(f"`{msg.id}` **{msg.author.name}**: {preview}")
+		if lines:
+			await message.channel.send("\n".join(reversed(lines)))
+		else:
+			await message.channel.send("No messages found.")
+
+	elif cmd == "!ownerhelp":
+		await message.channel.send(
+			"**Owner DM Commands:**\n"
+			"`!channels` — list all guilds & channels\n"
+			"`!send <channel_id> <message>` — send a message\n"
+			"`!reply <channel_id> <message_id> <message>` — reply to a message\n"
+			"`!dm <user_id> <message>` — DM a user\n"
+			"`!recent <channel_id> [count]` — show recent messages (max 20)\n"
+			"`!ownerhelp` — show this help"
+		)
+	else:
+		await message.channel.send(
+			"Unknown command. Send `!ownerhelp` for available commands."
+		)
+
+
 @dc.event
 async def on_message(message):
 	if message.channel.type == ChannelType.private and message.author.id != dc.user.id:
-		await message.channel.send(cfg.HELP)
+		if message.author.id == cfg.DC_OWNER_ID:
+			await handle_owner_dm(message)
+		else:
+			await message.channel.send(cfg.HELP)
 
 	if message.channel.type != ChannelType.text:
 		return
@@ -111,6 +228,15 @@ async def on_ready():
 					await deploy_msg.reply("You are insinuating that the 5th pick was more responsible for the loss than the 1st and should lose more? I disagree with your logic, human.")
 		except Exception as e:
 			log.error(f"Failed to send deployment reply: {e}")
+
+		# DM the owner on startup
+		try:
+			if cfg.DC_OWNER_ID:
+				owner = await dc.fetch_user(cfg.DC_OWNER_ID)
+				if owner:
+					await owner.send("Bot is online. Send `!ownerhelp` for available commands.")
+		except Exception as e:
+			log.error(f"Failed to DM owner: {e}")
 
 	else:  # Reconnected, fetch new channel objects
 		bot.bot_ready = True
